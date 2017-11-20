@@ -15,24 +15,22 @@ namespace Frends.Community.Oracle.ExecuteCommand
 {
     public class ExecuteCommand
     {
-        public async static Task<dynamic> Execute(OracleCommandData OracleCommandData, OracleParameter[] Parameters, OracleParameter[] outputParameters, ConnectionInformation ConnectionInformation, CancellationToken cancellationToken)
+        public async static Task<dynamic> Execute(Input InputData, Options OptionData)
         {
-            using (OracleConnection oracleConnection = new OracleConnection(ConnectionInformation.ConnectionString))
+            using (OracleConnection oracleConnection = new OracleConnection(InputData.ConnectionString))
             {
-                await oracleConnection.OpenAsync(cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
+                await oracleConnection.OpenAsync();
 
-                using (OracleCommand command = new OracleCommand(OracleCommandData.CommandOrProcedureName, oracleConnection))
+                using (OracleCommand command = new OracleCommand(InputData.CommandOrProcedureName, oracleConnection))
                 {
-                    command.CommandType = (CommandType)OracleCommandData.CommandType;
-                    command.CommandTimeout = ConnectionInformation.TimeoutSeconds;
-                    command.Parameters.AddRange(Parameters.Select(x => CreateOracleParam(x)).ToArray());
-                    command.Parameters.AddRange(outputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
-                    command.BindByName = OracleCommandData.BindParametersByName;
+                    command.CommandType = (CommandType)OptionData.CommandType;
+                    command.CommandTimeout = OptionData.TimeoutSeconds;
+                    command.Parameters.AddRange(OptionData.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
+                    command.Parameters.AddRange(OptionData.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+                    command.BindByName = OptionData.BindParametersByName;
 
 
-                    var runCommand = command.ExecuteNonQueryAsync(cancellationToken);
-                    cancellationToken.ThrowIfCancellationRequested();
+                    var runCommand = command.ExecuteNonQueryAsync(); 
                     int affectedRows = await runCommand;
 
                     var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
@@ -42,7 +40,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     oracleConnection.Close();
                     OracleConnection.ClearPool(oracleConnection);
 
-                    if (OracleCommandData.DataReturnType == OracleCommandReturnType.AffectedRows)
+                    if (OptionData.DataReturnType == OracleCommandReturnType.AffectedRows)
                     {
                         return affectedRows;
                     }
@@ -53,15 +51,15 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     xDoc.Add(root);
                     outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
 
-                    if (OracleCommandData.DataReturnType == OracleCommandReturnType.XDocument)
+                    if (OptionData.DataReturnType == OracleCommandReturnType.XDocument)
                     {
                         return xDoc;
                     }
-                    else if (OracleCommandData.DataReturnType == OracleCommandReturnType.XmlString)
+                    else if (OptionData.DataReturnType == OracleCommandReturnType.XmlString)
                     {
                         return xDoc.ToString();
                     }
-                    else if (OracleCommandData.DataReturnType == OracleCommandReturnType.JSONString)
+                    else if (OptionData.DataReturnType == OracleCommandReturnType.JSONString)
                     {
                         return JsonConvert.SerializeObject(outputOracleParams);
                     }
@@ -73,6 +71,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
             }
         }
 
+        #region HelperFunctions
         private static OracleParam CreateOracleParam(OracleParameter parameter, ParameterDirection? direction = null)
         {
             var newParam = new OracleParam()
@@ -102,6 +101,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
             }
             return xelem;
         }
+        #endregion
 
     }
 }

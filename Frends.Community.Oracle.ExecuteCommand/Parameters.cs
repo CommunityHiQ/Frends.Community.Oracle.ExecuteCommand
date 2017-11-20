@@ -7,25 +7,34 @@ using System.Threading.Tasks;
 
 namespace Frends.Community.Oracle.ExecuteCommand
 {
+    #region Enums
     public enum OracleCommandType { StoredProcedure = 4, Command = 1 }
     public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString }
+    #endregion
 
-    public class OracleCommandData
-    {
-        [DefaultValue("\"testprocedure\"")]
-        public String CommandOrProcedureName { get; set; }
-        public OracleCommandType CommandType { get; set; }
-        public OracleCommandReturnType DataReturnType { get; set; }
-        public bool BindParametersByName { get; set; }
-    }
-
-    public class ConnectionInformation
+    public class Input
     {
         [PasswordPropertyText(true)]
         [DefaultValue("\"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;\"")]
         public String ConnectionString { get; set; }
+
+        [DefaultValue("\"testprocedure\"")]
+        public String CommandOrProcedureName { get; set; }
+    }
+
+    public class Options
+    {
+        public OracleCommandType CommandType { get; set; }
+
+        public OracleCommandReturnType DataReturnType { get; set; }
+
+        public bool BindParametersByName { get; set; }
+
         [DefaultValue(30)]
         public Int32 TimeoutSeconds { get; set; }
+
+        public OracleParameter[] InputParameters { get; set; }
+        public OracleParameter[] OutputParameters { get; set; }
     }
 
     public class OracleParameter
