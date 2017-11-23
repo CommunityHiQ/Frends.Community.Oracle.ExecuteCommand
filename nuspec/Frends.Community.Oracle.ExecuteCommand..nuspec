@@ -18,7 +18,7 @@
         </frameworkAssemblies>
     </metadata>
     <files>
-        <file src="..\Frends.Community.Oracle.ExecuteCommand\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.dll" target="lib\net452\Frends.Community.Sftp.dll" />
-        <file src="..\Frends.Community.Oracle.ExecuteCommand\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.XML" target="lib\net452\Frends.Community.Sftp.XML" />
+        <file src="..\Frends.Community.Oracle.ExecuteCommand\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.dll" target="lib\net452\Frends.Community.Oracle.ExecuteCommand.dll" />
+        <file src="..\Frends.Community.Oracle.ExecuteCommand\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.XML" target="lib\net452\Frends.Community.Oracle.ExecuteCommandp.XML" />
     </files>
 </package>
