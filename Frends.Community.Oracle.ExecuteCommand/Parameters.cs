@@ -24,24 +24,32 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
     public class Options
     {
+        [DefaultValue("\"Command\"")]
         public OracleCommandType CommandType { get; set; }
 
+        [DefaultValue("\"XDocument\"")]
         public OracleCommandReturnType DataReturnType { get; set; }
 
+        [DefaultValue("\"false\"")]
         public bool BindParametersByName { get; set; }
 
         [DefaultValue(30)]
         public Int32 TimeoutSeconds { get; set; }
 
         public OracleParameter[] InputParameters { get; set; }
+
         public OracleParameter[] OutputParameters { get; set; }
     }
 
     public class OracleParameter
     {
+        [DefaultValue("\"Parameter Name\"")]
         public String Name { get; set; }
+
+        [DefaultValue("\"Value\"")]
         public dynamic Value { get; set; }
 
+        [DefaultValue("\"NVarchar2\"")]
         public ParameterDataType DataType { get; set; }
 
         public enum ParameterDataType

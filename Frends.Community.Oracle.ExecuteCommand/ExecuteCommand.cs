@@ -15,6 +15,12 @@ namespace Frends.Community.Oracle.ExecuteCommand
 {
     public class ExecuteCommand
     {
+        /// <summary>
+        /// Task for executing non-query commands and stored procedures in Oracle. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
+        /// </summary>
+        /// <param name="InputData">The input data for the task</param>
+        /// <param name="OptionData">The options for the task</param>
+        /// <returns>The data returned by the query as specified by the OptionData input DataReturnType</returns>
         public async static Task<dynamic> Execute(Input InputData, Options OptionData)
         {
             using (OracleConnection oracleConnection = new OracleConnection(InputData.ConnectionString))
@@ -25,8 +31,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 {
                     command.CommandType = (CommandType)OptionData.CommandType;
                     command.CommandTimeout = OptionData.TimeoutSeconds;
-                    command.Parameters.AddRange(OptionData.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
-                    command.Parameters.AddRange(OptionData.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+                    if (OptionData.InputParameters != null) command.Parameters.AddRange(OptionData.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
+                    if (OptionData.OutputParameters != null) command.Parameters.AddRange(OptionData.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
                     command.BindByName = OptionData.BindParametersByName;
 
 
