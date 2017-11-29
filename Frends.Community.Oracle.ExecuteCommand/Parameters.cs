@@ -8,46 +8,90 @@ namespace Frends.Community.Oracle.ExecuteCommand
     public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString }
     #endregion
 
+    /// <summary>
+    /// Inputs for Oracle ExecuteCommand component
+    /// </summary>
     public class Input
     {
-        [PasswordPropertyText(true)]
-        [DefaultValue("\"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;\"")]
+        /// <summary>
+        /// The Oracle DB connection string
+        /// </summary>
+        [DefaultValue("Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;")]
         public String ConnectionString { get; set; }
 
-        [DefaultValue("\"testprocedure\"")]
+        /// <summary>
+        /// Either the command to execute, or the name of the stored procedure to execute
+        /// </summary>
+        [DefaultValue("testprocedure")]
         public String CommandOrProcedureName { get; set; }
     }
 
+    /// <summary>
+    /// Options for Oracle ExecuteCommand component
+    /// </summary>
     public class Options
     {
-        [DefaultValue("\"Command\"")]
+        /// <summary>
+        /// The type of execution
+        /// </summary>
+        [DefaultValue(OracleCommandType.Command)]
         public OracleCommandType CommandType { get; set; }
 
-        [DefaultValue("\"XDocument\"")]
+        /// <summary>
+        /// The format in which the component willl return data
+        /// </summary>
+        [DefaultValue(OracleCommandReturnType.XDocument)]
         public OracleCommandReturnType DataReturnType { get; set; }
 
-        [DefaultValue("\"false\"")]
+        /// <summary>
+        /// Whether to bind parameters by name
+        /// </summary>
+        [DefaultValue(false)]
         public bool BindParametersByName { get; set; }
 
+        /// <summary>
+        /// The timeout value for the execution in seconds
+        /// </summary>
         [DefaultValue(30)]
         public Int32 TimeoutSeconds { get; set; }
 
+        /// <summary>
+        /// The input parameters for the query
+        /// </summary>
         public OracleParameter[] InputParameters { get; set; }
 
+        /// <summary>
+        /// The output parameters for the query
+        /// </summary>
         public OracleParameter[] OutputParameters { get; set; }
     }
 
+    /// <summary>
+    /// Parameters for query
+    /// </summary>
     public class OracleParameter
     {
-        [DefaultValue("\"Parameter Name\"")]
+        /// <summary>
+        /// The name of the parameter
+        /// </summary>
+        [DefaultValue("Parameter Name")]
         public String Name { get; set; }
 
-        [DefaultValue("\"Value\"")]
+        /// <summary>
+        /// The value of the parameter
+        /// </summary>
+        [DefaultValue("Value")]
         public dynamic Value { get; set; }
 
-        [DefaultValue("\"NVarchar2\"")]
+        /// <summary>
+        /// The data type of the parameter
+        /// </summary>
+        [DefaultValue(ParameterDataType.NVarchar2)]
         public ParameterDataType DataType { get; set; }
 
+        /// <summary>
+        /// Enumeration for specifying the data types
+        /// </summary>
         public enum ParameterDataType
         {
             BFile = 101,

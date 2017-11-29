@@ -55,21 +55,21 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     xDoc.Add(root);
                     outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
 
-                    if (OptionData.DataReturnType == OracleCommandReturnType.XDocument)
+                    // Affected rows are handled above!
+                    switch (OptionData.DataReturnType)
                     {
-                        return xDoc;
-                    }
-                    else if (OptionData.DataReturnType == OracleCommandReturnType.XmlString)
-                    {
-                        return xDoc.ToString();
-                    }
-                    else if (OptionData.DataReturnType == OracleCommandReturnType.JSONString)
-                    {
-                        return JsonConvert.SerializeObject(outputOracleParams);
-                    }
-                    else
-                    {
-                        throw new Exception("Unsupported DataReturnType.");
+                        case OracleCommandReturnType.JSONString:
+                            return JsonConvert.SerializeObject(outputOracleParams);
+                            break;
+                        case OracleCommandReturnType.XDocument:
+                            return xDoc;
+                            break;
+                        case OracleCommandReturnType.XmlString:
+                            return xDoc.ToString();
+                        default:
+                            throw new Exception("Unsupported DataReturnType.");
+                            break;
+
                     }
                 }
             }

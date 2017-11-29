@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frends.Community.Oracle.Exe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57F2D3C8-D63F-495C-9CC5-B240E8ACEFD1}"
 	ProjectSection(SolutionItems) = preProject
-		nuspec\Frends.Community.Oracle.ExecuteCommand..nuspec = nuspec\Frends.Community.Oracle.ExecuteCommand..nuspec
+		nuspec\Frends.Community.Oracle.ExecuteCommand.nuspec = nuspec\Frends.Community.Oracle.ExecuteCommand.nuspec
 		README.md = README.md
 	EndProjectSection
 EndProject
