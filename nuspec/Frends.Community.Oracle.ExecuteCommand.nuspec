@@ -1,23 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-    <metadata>
-        <id>Frends.Community.Oracle.ExecuteCommand</id>
-        <version>1.0.0</version>
-        <title>Frends Community Oracle ExecuteCommand</title>
-        <authors>HiQ Finland</authors>
-        <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Task for performing non-query commands and stored procedures in Oracle databases</description>
-        <summary />
-        <dependencies>
-            <dependency id="Oracle.ManagedDataAccess" version="12.2.1100" />
-            <dependency id="Newtonsoft.Json" version="10.0.3" />
-        </dependencies>
-        <frameworkAssemblies>
-            <frameworkAssembly assemblyName="System" targetFramework="" />
-        </frameworkAssemblies>
-    </metadata>
-    <files>
-        <file src="..\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.dll" target="lib\net452\Frends.Community.Oracle.ExecuteCommand.dll" />
-        <file src="..\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.XML" target="lib\net452\Frends.Community.Oracle.ExecuteCommandp.XML" />
-    </files>
+  <metadata>
+    <id>Frends.Community.Oracle.ExecuteCommand</id>
+    <version>1.0.0</version>
+    <title>Frends Community Oracle ExecuteCommand</title>
+    <authors>HiQ Finland</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Task for performing non-query commands and stored procedures in Oracle databases</description>
+    <summary />
+    <dependencies>
+      <dependency id="Frends.Tasks.Attributes" version="1.2.1" />
+      <dependency id="Oracle.ManagedDataAccess" version="12.2.1100" />
+      <dependency id="Newtonsoft.Json" version="10.0.3" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework="" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="..\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.dll" target="lib\net452\Frends.Community.Oracle.ExecuteCommand.dll" />
+    <file src="..\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.XML" target="lib\net452\Frends.Community.Oracle.ExecuteCommandp.XML" />
+  </files>
 </package>
