@@ -45,19 +45,14 @@ NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 | ---------------------| ---------------------| ------------------------------------ | ----- |
 | ConnectionString | string | Connection string to the oracle database | Data Source=localhost;User Id=<userid>;Password=<password>;Persist Security Info=True; |
 | CommandOrProcedureName | string | The SQL command or stored procedure to execute | INSERT INTO TestTable (textField) VALUES (:param1) |
-
-NOTE: the correct notation to use parameters in PL/SQL is :parameterName, not @parameterName as in T-SQL. See example query above.
-
-#### Options
-
-| Property             | Type                 | Description                          | Example |
-| ---------------------| ---------------------| ------------------------------------ | ----- |
 | CommandType | enum | The type of command to execute: command or stored procedure | Command |
 | DataReturnType | OracleCommandReturnType | Specifies in what format to return the results | XMLDocument |
 | BindParametersByName | bool | Whether to bind the parameters by name | false |
 | TimeoutSeconds | integer | The amount of seconds to let a query run before timeout | 666 |
 | InputParameters | OracleParameter[] |  Array with the oracle input parameters | n/a |
 | OutputParameters | OracleParameter[] |  Array with the oracle input parameters | n/a |
+
+NOTE: the correct notation to use parameters in PL/SQL is :parameterName, not @parameterName as in T-SQL. See example query above.
 
 #### OracleParameter
 
@@ -66,6 +61,7 @@ NOTE: the correct notation to use parameters in PL/SQL is :parameterName, not @p
 | Name | string | Name of the parameter | ParamName |
 | Value | dynamic | Value of the parameter | 1 |
 | DataType | ParameterDataType | Specifies the Oracle type of the parameter using the ParameterDataType enumeration | NVarchar |
+| Size | int | Specifies the size of the parameter | 255 |
 
 ### Oracle.ExecuteCommand.Execute
 
