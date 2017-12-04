@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Frends.Tasks.Attributes;
+using System;
 using System.ComponentModel;
 
 namespace Frends.Community.Oracle.ExecuteCommand
@@ -17,7 +18,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The Oracle DB connection string
         /// </summary>
         [DefaultValue("Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;")]
-        public String ConnectionString { get; set; }
+        [DefaultDisplayType(DisplayType.Text)]
+        public string ConnectionString { get; set; }
 
         /// <summary>
         /// The type of execution
@@ -29,7 +31,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// Either the command to execute, or the name of the stored procedure to execute
         /// </summary>
         [DefaultValue("testprocedure")]
-        public String CommandOrProcedureName { get; set; }
+        [DefaultDisplayType(DisplayType.Text)]
+        public string CommandOrProcedureName { get; set; }
 
         /// <summary>
         /// The input parameters for the query
@@ -46,7 +49,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The timeout value for the execution in seconds
         /// </summary>
         [DefaultValue(30)]
-        public Int32 TimeoutSeconds { get; set; }
+        public int TimeoutSeconds { get; set; }
     }
 
     /// <summary>
@@ -75,12 +78,14 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The name of the parameter
         /// </summary>
         [DefaultValue("Parameter Name")]
-        public String Name { get; set; }
+        [DefaultDisplayType(DisplayType.Text)]
+        public string Name { get; set; }
 
         /// <summary>
         /// The value of the parameter
         /// </summary>
         [DefaultValue("Value")]
+        [DefaultDisplayType(DisplayType.Text)]
         public dynamic Value { get; set; }
 
         /// <summary>
