@@ -16,22 +16,22 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <summary>
         /// Task for executing non-query commands and stored procedures in Oracle. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
         /// </summary>
-        /// <param name="InputData">The input data for the task</param>
-        /// <param name="OptionData">The options for the task</param>
+        /// <param name="input">The input data for the task</param>
+        /// <param name="output">The options for the task</param>
         /// <returns>The data returned by the query as specified by the OptionData input DataReturnType</returns>
-        public async static Task<dynamic> Execute(Input InputData, Options OptionData)
+        public async static Task<dynamic> Execute(Input input, Output output)
         {
-            using (OracleConnection oracleConnection = new OracleConnection(InputData.ConnectionString))
+            using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
             {
                 await oracleConnection.OpenAsync();
 
-                using (OracleCommand command = new OracleCommand(InputData.CommandOrProcedureName, oracleConnection))
+                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
                 {
-                    command.CommandType = (CommandType)OptionData.CommandType;
-                    command.CommandTimeout = OptionData.TimeoutSeconds;
-                    if (OptionData.InputParameters != null) command.Parameters.AddRange(OptionData.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
-                    if (OptionData.OutputParameters != null) command.Parameters.AddRange(OptionData.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
-                    command.BindByName = OptionData.BindParametersByName;
+                    command.CommandType = (CommandType)input.CommandType;
+                    command.CommandTimeout = input.TimeoutSeconds;
+                    if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
+                    if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+                    command.BindByName = input.BindParametersByName;
 
                     var runCommand = command.ExecuteNonQueryAsync();
                     int affectedRows = await runCommand;
@@ -43,7 +43,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     oracleConnection.Close();
                     OracleConnection.ClearPool(oracleConnection);
 
-                    if (OptionData.DataReturnType == OracleCommandReturnType.AffectedRows)
+                    if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
                     {
                         return affectedRows;
                     }
@@ -55,7 +55,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
 
                     // Affected rows are handled above!
-                    switch (OptionData.DataReturnType)
+                    switch (output.DataReturnType)
                     {
                         case OracleCommandReturnType.JSONString:
                             return JsonConvert.SerializeObject(outputOracleParams);

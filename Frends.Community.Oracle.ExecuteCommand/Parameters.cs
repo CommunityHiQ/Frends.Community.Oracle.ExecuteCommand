@@ -20,28 +20,21 @@ namespace Frends.Community.Oracle.ExecuteCommand
         public String ConnectionString { get; set; }
 
         /// <summary>
-        /// Either the command to execute, or the name of the stored procedure to execute
-        /// </summary>
-        [DefaultValue("testprocedure")]
-        public String CommandOrProcedureName { get; set; }
-    }
-
-    /// <summary>
-    /// Options for Oracle ExecuteCommand component
-    /// </summary>
-    public class Options
-    {
-        /// <summary>
         /// The type of execution
         /// </summary>
         [DefaultValue(OracleCommandType.Command)]
         public OracleCommandType CommandType { get; set; }
 
         /// <summary>
-        /// The format in which the component willl return data
+        /// Either the command to execute, or the name of the stored procedure to execute
         /// </summary>
-        [DefaultValue(OracleCommandReturnType.XDocument)]
-        public OracleCommandReturnType DataReturnType { get; set; }
+        [DefaultValue("testprocedure")]
+        public String CommandOrProcedureName { get; set; }
+
+        /// <summary>
+        /// The input parameters for the query
+        /// </summary>
+        public OracleParameter[] InputParameters { get; set; }
 
         /// <summary>
         /// Whether to bind parameters by name
@@ -54,11 +47,18 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// </summary>
         [DefaultValue(30)]
         public Int32 TimeoutSeconds { get; set; }
+    }
 
+    /// <summary>
+    /// Options for Oracle ExecuteCommand component
+    /// </summary>
+    public class Output
+    {
         /// <summary>
-        /// The input parameters for the query
+        /// The format in which the component willl return data
         /// </summary>
-        public OracleParameter[] InputParameters { get; set; }
+        [DefaultValue(OracleCommandReturnType.XDocument)]
+        public OracleCommandReturnType DataReturnType { get; set; }
 
         /// <summary>
         /// The output parameters for the query

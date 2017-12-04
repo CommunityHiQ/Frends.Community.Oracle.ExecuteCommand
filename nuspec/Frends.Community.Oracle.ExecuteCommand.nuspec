@@ -9,16 +9,15 @@
         <description>Task for performing non-query commands and stored procedures in Oracle databases</description>
         <summary />
         <dependencies>
-            <dependency id="Frends.Tasks.Attributes" version="[1.2.0]" />
-            <dependency id="Oracle.ManagedDataAccess" version="4.0.30319" />
-            <dependency id="Newtonsoft.Json" version="6.0.8" />
+            <dependency id="Oracle.ManagedDataAccess" version="12.2.1100" />
+            <dependency id="Newtonsoft.Json" version="10.0.3" />
         </dependencies>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework="" />
         </frameworkAssemblies>
     </metadata>
     <files>
-        <file src="..\Frends.Community.Oracle.ExecuteCommand\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.dll" target="lib\net452\Frends.Community.Oracle.ExecuteCommand.dll" />
-        <file src="..\Frends.Community.Oracle.ExecuteCommand\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.XML" target="lib\net452\Frends.Community.Oracle.ExecuteCommandp.XML" />
+        <file src="..\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.dll" target="lib\net452\Frends.Community.Oracle.ExecuteCommand.dll" />
+        <file src="..\Frends.Community.Oracle.ExecuteCommand\bin\Release\Frends.Community.Oracle.ExecuteCommand.XML" target="lib\net452\Frends.Community.Oracle.ExecuteCommandp.XML" />
     </files>
 </package>
