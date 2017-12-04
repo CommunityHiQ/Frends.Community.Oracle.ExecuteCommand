@@ -33,8 +33,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     if (OptionData.OutputParameters != null) command.Parameters.AddRange(OptionData.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
                     command.BindByName = OptionData.BindParametersByName;
 
-
-                    var runCommand = command.ExecuteNonQueryAsync(); 
+                    var runCommand = command.ExecuteNonQueryAsync();
                     int affectedRows = await runCommand;
 
                     var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
@@ -82,7 +81,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
             {
                 ParameterName = parameter.Name,
                 Value = parameter.Value,
-                OracleDbType = (OracleDbType)(int)parameter.DataType
+                OracleDbType = (OracleDbType)(int)parameter.DataType,
+                Size = parameter.Size
             };
 
             if (direction.HasValue)
@@ -101,7 +101,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
             }
             else
             {
-                xelem.Value = (string)parameter.Value;
+                xelem.Value = parameter.Value.ToString();
             }
             return xelem;
         }
