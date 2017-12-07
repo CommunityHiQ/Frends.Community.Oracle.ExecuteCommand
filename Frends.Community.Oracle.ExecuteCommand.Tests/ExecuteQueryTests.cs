@@ -5,7 +5,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
     [TestClass]
     public class ExecuteQueryTests
     {
-        string connectionString = "Data Source=localhost;User Id=<userID>;Password=<pwd>;Persist Security Info=True;";
+        string connectionString = "Data Source=localhost;User Id=<username>;Password=<password>;Persist Security Info=True;";
 
         [TestMethod]
         public void ExecuteOracleCommand()
