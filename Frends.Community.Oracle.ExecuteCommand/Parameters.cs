@@ -94,10 +94,10 @@ namespace Frends.Community.Oracle.ExecuteCommand
         [DefaultValue(ParameterDataType.NVarchar2)]
         public ParameterDataType DataType { get; set; }
 
-       /// <summary>
-       /// The size of the parameter. Doesn't need to be set for input parameters.
-       /// </summary>
-       [DefaultValue(0)]
+        /// <summary>
+        /// The size of the parameter. Doesn't need to be set for input parameters.
+        /// </summary>
+        [DefaultValue(0)]
         public int Size { get; set; }
 
         /// <summary>

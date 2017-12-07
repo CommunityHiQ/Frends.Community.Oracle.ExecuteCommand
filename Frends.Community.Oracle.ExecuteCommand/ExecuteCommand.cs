@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Frends.Tasks.Attributes;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 
 namespace Frends.Community.Oracle.ExecuteCommand
@@ -19,7 +20,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <param name="input">The input data for the task</param>
         /// <param name="output">The options for the task</param>
         /// <returns>The data returned by the query as specified by the OptionData input DataReturnType</returns>
-        public async static Task<dynamic> Execute(Input input, Output output)
+        public async static Task<dynamic> Execute([CustomDisplay(DisplayOption.Tab)] Input input, [CustomDisplay(DisplayOption.Tab)]Output output)
         {
             using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
             {
