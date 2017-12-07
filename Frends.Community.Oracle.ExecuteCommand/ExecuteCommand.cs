@@ -25,51 +25,59 @@ namespace Frends.Community.Oracle.ExecuteCommand
             {
                 await oracleConnection.OpenAsync();
 
-                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
+                try
                 {
-                    command.CommandType = (CommandType)input.CommandType;
-                    command.CommandTimeout = input.TimeoutSeconds;
-                    if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
-                    if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
-                    command.BindByName = input.BindParametersByName;
+                    using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
+                    {
+                        command.CommandType = (CommandType)input.CommandType;
+                        command.CommandTimeout = input.TimeoutSeconds;
+                        if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
+                        if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+                        command.BindByName = input.BindParametersByName;
 
-                    var runCommand = command.ExecuteNonQueryAsync();
-                    int affectedRows = await runCommand;
+                        var runCommand = command.ExecuteNonQueryAsync();
+                        int affectedRows = await runCommand;
 
-                    var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
+                        var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
 
+                        if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
+                        {
+                            return affectedRows;
+                        }
+
+                        //Builds xml document from Oracle output parameters
+                        var xDoc = new XDocument();
+                        var root = new XElement("Root");
+                        xDoc.Add(root);
+                        outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
+
+                        // Affected rows are handled above!
+                        switch (output.DataReturnType)
+                        {
+                            case OracleCommandReturnType.JSONString:
+                                return JsonConvert.SerializeObject(outputOracleParams);
+                                break;
+                            case OracleCommandReturnType.XDocument:
+                                return xDoc;
+                                break;
+                            case OracleCommandReturnType.XmlString:
+                                return xDoc.ToString();
+                            default:
+                                throw new Exception("Unsupported DataReturnType.");
+                                break;
+
+                        }
+                    }
+                } catch (Exception e)
+                {
+                    throw e;
+                }
+                finally
+                {
                     // Close connection:
                     oracleConnection.Dispose();
                     oracleConnection.Close();
                     OracleConnection.ClearPool(oracleConnection);
-
-                    if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
-                    {
-                        return affectedRows;
-                    }
-
-                    //Builds xml document from Oracle output parameters
-                    var xDoc = new XDocument();
-                    var root = new XElement("Root");
-                    xDoc.Add(root);
-                    outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
-
-                    // Affected rows are handled above!
-                    switch (output.DataReturnType)
-                    {
-                        case OracleCommandReturnType.JSONString:
-                            return JsonConvert.SerializeObject(outputOracleParams);
-                            break;
-                        case OracleCommandReturnType.XDocument:
-                            return xDoc;
-                            break;
-                        case OracleCommandReturnType.XmlString:
-                            return xDoc.ToString();
-                        default:
-                            throw new Exception("Unsupported DataReturnType.");
-                            break;
-
-                    }
                 }
             }
         }
