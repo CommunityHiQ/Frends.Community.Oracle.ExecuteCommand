@@ -7,7 +7,13 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
     public class ExecuteQueryTests
     {
         string connectionString = "Data Source=localhost;User Id=<userID>;Password=<pwd>;Persist Security Info=True;";
+        private Options _taskOptions;
 
+        [Setup]
+        public void TestSetup()
+        {
+            _taskOptions = new Options { ThrowErrorOnFailure = true };
+        }
         [Test]
         public void ExecuteOracleCommand()
         {
@@ -17,7 +23,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             string query = "INSERT INTO TestTable (textField) VALUES ('unit test text')";
 
-            var output = new Output();
+            var output = new OutputProperties();
             var input = new Input();
 
             input.ConnectionString = connectionString;
@@ -26,7 +32,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             input.CommandType = OracleCommandType.Command;
             input.TimeoutSeconds = 60;
 
-            var result = ExecuteCommand.Execute(input, output);
+            var result = ExecuteCommand.Execute(input, output, _taskOptions);
 
             Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
         }
@@ -41,7 +47,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             OracleParam.Name = "param1";
             OracleParam.Value = "Text from parameter";
 
-            var output = new Output();
+            var output = new OutputProperties();
             var input = new Input();
 
             input.ConnectionString = connectionString;
@@ -52,7 +58,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             input.InputParameters = new OracleParameter[1];
             input.InputParameters[0] = OracleParam;
 
-            var result = ExecuteCommand.Execute(input, output);
+            var result = ExecuteCommand.Execute(input, output, _taskOptions);
 
             Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
         }
@@ -76,7 +82,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             OracleParam.Name = "returnVal";
             OracleParam.Size = 255;
 
-            var output = new Output();
+            var output = new OutputProperties();
             var input = new Input();
 
             input.ConnectionString = connectionString;
@@ -88,7 +94,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             output.OutputParameters = new OracleParameter[1];
             output.OutputParameters[0] = OracleParam;
 
-            var result = ExecuteCommand.Execute(input, output);
+            var result = ExecuteCommand.Execute(input, output, _taskOptions);
 
             Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
         }

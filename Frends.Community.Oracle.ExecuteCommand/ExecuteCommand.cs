@@ -20,58 +20,70 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <param name="input">The input data for the task</param>
         /// <param name="output">The options for the task</param>
         /// <returns>The data returned by the query as specified by the OptionData input DataReturnType</returns>
-        public async static Task<dynamic> Execute([CustomDisplay(DisplayOption.Tab)] Input input, [CustomDisplay(DisplayOption.Tab)]Output output)
+        public async static Task<Output> Execute([CustomDisplay(DisplayOption.Tab)] Input input, 
+            [CustomDisplay(DisplayOption.Tab)]OutputProperties output,
+            [CustomDisplay(DisplayOption.Tab)]Options options)
         {
-            using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
+            try
             {
-                await oracleConnection.OpenAsync();
-
-                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
+                using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
                 {
-                    command.CommandType = (CommandType)input.CommandType;
-                    command.CommandTimeout = input.TimeoutSeconds;
-                    if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
-                    if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
-                    command.BindByName = input.BindParametersByName;
+                    await oracleConnection.OpenAsync();
 
-                    var runCommand = command.ExecuteNonQueryAsync();
-                    int affectedRows = await runCommand;
-
-                    var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
-
-                    // Close connection:
-                    oracleConnection.Dispose();
-                    oracleConnection.Close();
-                    OracleConnection.ClearPool(oracleConnection);
-
-                    if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
+                    using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
                     {
-                        return affectedRows;
-                    }
+                        command.CommandType = (CommandType)input.CommandType;
+                        command.CommandTimeout = input.TimeoutSeconds;
+                        if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
+                        if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+                        command.BindByName = input.BindParametersByName;
 
-                    //Builds xml document from Oracle output parameters
-                    var xDoc = new XDocument();
-                    var root = new XElement("Root");
-                    xDoc.Add(root);
-                    outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
+                        var runCommand = command.ExecuteNonQueryAsync();
+                        int affectedRows = await runCommand;
 
-                    // Affected rows are handled above!
-                    switch (output.DataReturnType)
-                    {
-                        case OracleCommandReturnType.JSONString:
-                            return JsonConvert.SerializeObject(outputOracleParams);
-                            break;
-                        case OracleCommandReturnType.XDocument:
-                            return xDoc;
-                            break;
-                        case OracleCommandReturnType.XmlString:
-                            return xDoc.ToString();
-                        default:
-                            throw new Exception("Unsupported DataReturnType.");
-                            break;
+                        var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
 
+                        // Close connection:
+                        oracleConnection.Dispose();
+                        oracleConnection.Close();
+                        OracleConnection.ClearPool(oracleConnection);
+
+                        if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
+                        {
+                            return new Output { Success = true, Result = affectedRows };
+                        }
+
+                        //Builds xml document from Oracle output parameters
+                        var xDoc = new XDocument();
+                        var root = new XElement("Root");
+                        xDoc.Add(root);
+                        outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
+
+                        dynamic commandResult;
+                        // Affected rows are handled above!
+                        switch (output.DataReturnType)
+                        {
+                            case OracleCommandReturnType.JSONString:
+                                commandResult = JsonConvert.SerializeObject(outputOracleParams);
+                                break;
+                            case OracleCommandReturnType.XDocument:
+                                commandResult = xDoc;
+                                break;
+                            case OracleCommandReturnType.XmlString:
+                                commandResult = xDoc.ToString();
+                                break;
+                            default:
+                                throw new Exception("Unsupported DataReturnType.");
+                        }
+
+                        return new Output { Success = true, Result = commandResult };
                     }
                 }
+            }catch(Exception ex)
+            {
+                if (options.ThrowErrorOnFailure)
+                    throw ex;
+                return new Output { Success = false, Message = ex.Message };
             }
         }
 
