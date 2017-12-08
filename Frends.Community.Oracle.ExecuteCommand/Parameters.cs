@@ -55,7 +55,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     /// <summary>
     /// Options for Oracle ExecuteCommand component
     /// </summary>
-    public class Output
+    public class OutputProperties
     {
         /// <summary>
         /// The format in which the component willl return data
@@ -67,6 +67,23 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The output parameters for the query
         /// </summary>
         public OracleParameter[] OutputParameters { get; set; }
+    }
+
+    public class Options
+    {
+        /// <summary>
+        /// Choose if error should be thrown if Task failes.
+        /// Otherwise returns Object {Success = false }
+        /// </summary>
+        [DefaultValue(true)]
+        public bool ThrowErrorOnFailure { get; set; }
+    }
+
+    public class Output
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public dynamic Result { get; set; }
     }
 
     /// <summary>
@@ -94,10 +111,10 @@ namespace Frends.Community.Oracle.ExecuteCommand
         [DefaultValue(ParameterDataType.NVarchar2)]
         public ParameterDataType DataType { get; set; }
 
-       /// <summary>
-       /// The size of the parameter. Doesn't need to be set for input parameters.
-       /// </summary>
-       [DefaultValue(0)]
+        /// <summary>
+        /// The size of the parameter. Doesn't need to be set for input parameters.
+        /// </summary>
+        [DefaultValue(0)]
         public int Size { get; set; }
 
         /// <summary>

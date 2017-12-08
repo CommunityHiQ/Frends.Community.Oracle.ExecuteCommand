@@ -1,65 +1,69 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 
 namespace Frends.Community.Oracle.ExecuteCommand.Tests
 {
-    [TestClass]
+    [TestFixture]
+    //[Ignore("No way to automate this test without an Oracle instance.")]
     public class ExecuteQueryTests
     {
-        string connectionString = "Data Source=localhost;User Id=<userID>;Password=<pwd>;Persist Security Info=True;";
+        string connectionString = "Data Source=localhost;User Id=SYSTEM;Password=salasana1;Persist Security Info=True;";
+        private Options _taskOptions;
 
-        [TestMethod]
+        [SetUp]
+        public void TestSetup()
+        {
+            _taskOptions = new Options { ThrowErrorOnFailure = true };
+        }
+        [Test]
         public void ExecuteOracleCommand()
         {
             /* Create test table with the following script before running the test:
              * CREATE TABLE TestTable ( textField VARCHAR(255) );
              */
-            // No way to automate this test without an Oracle instance.So it's just commented out.
 
-            //string query = "INSERT INTO TestTable (textField) VALUES ('unit test text')";
+            string query = "INSERT INTO TestTable (textField) VALUES ('unit test text')";
 
-            //var output = new Output();
-            //var input = new Input();
+            var output = new OutputProperties();
+            var input = new Input();
 
-            //input.ConnectionString = connectionString;
-            //input.CommandOrProcedureName = query;
+            input.ConnectionString = connectionString;
+            input.CommandOrProcedureName = query;
 
-            //input.CommandType = OracleCommandType.Command;
-            //input.TimeoutSeconds = 60;
+            input.CommandType = OracleCommandType.Command;
+            input.TimeoutSeconds = 60;
 
-            //var result = ExecuteCommand.Execute(input, output);
+            var result = ExecuteCommand.Execute(input, output, _taskOptions);
 
-            //Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
+            Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
         }
 
-        [TestMethod]
+        [Test]
         public void ExecuteOracleCommandWithParameters()
         {
-            // No way to automate this test without an Oracle instance.So it's just commented out.
+            string query = "INSERT INTO TestTable (textField) VALUES (:param1)";
 
-            //string query = "INSERT INTO TestTable (textField) VALUES (:param1)";
+            OracleParameter OracleParam = new OracleParameter();
+            OracleParam.DataType = OracleParameter.ParameterDataType.Varchar2;
+            OracleParam.Name = "param1";
+            OracleParam.Value = "Text from parameter";
 
-            //OracleParameter OracleParam = new OracleParameter();
-            //OracleParam.DataType = OracleParameter.ParameterDataType.Varchar2;
-            //OracleParam.Name = "param1";
-            //OracleParam.Value = "Text from parameter";
+            var output = new OutputProperties();
+            var input = new Input();
 
-            //var output = new Output();
-            //var input = new Input();
+            input.ConnectionString = connectionString;
+            input.CommandOrProcedureName = query;
 
-            //input.ConnectionString = connectionString;
-            //input.CommandOrProcedureName = query;
+            input.CommandType = OracleCommandType.Command;
+            input.TimeoutSeconds = 60;
+            input.InputParameters = new OracleParameter[1];
+            input.InputParameters[0] = OracleParam;
 
-            //input.CommandType = OracleCommandType.Command;
-            //input.TimeoutSeconds = 60;
-            //input.InputParameters = new OracleParameter[1];
-            //input.InputParameters[0] = OracleParam;           
+            var result = ExecuteCommand.Execute(input, output, _taskOptions);
 
-            //var result = ExecuteCommand.Execute(input, output);
-
-            //Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
+            Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
         }
 
-        [TestMethod]
+        [Test]
         public void ExecuteOracleStoredProcedureWithOutParam()
         {
             // Create this procedure:
@@ -69,30 +73,30 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
              * SELECT TEXTFIELD INTO returnVal FROM TESTTABLE WHERE ROWNUM = 1;
              * END;
              */
-            // No way to automate this test without an Oracle instance.So it's just commented out.
+            //No way to automate this test without an Oracle instance.So it's just commented out.
 
-            //string query = "UnitTestProc";
+            string query = "UnitTestProc";
 
-            //OracleParameter OracleParam = new OracleParameter();
-            //OracleParam.DataType = OracleParameter.ParameterDataType.Varchar2;
-            //OracleParam.Name = "returnVal";
-            //OracleParam.Size = 255;
+            OracleParameter OracleParam = new OracleParameter();
+            OracleParam.DataType = OracleParameter.ParameterDataType.Varchar2;
+            OracleParam.Name = "returnVal";
+            OracleParam.Size = 255;
 
-            //var output = new Output();
-            //var input = new Input();
+            var output = new OutputProperties();
+            var input = new Input();
 
-            //input.ConnectionString = connectionString;
-            //input.CommandOrProcedureName = query;
+            input.ConnectionString = connectionString;
+            input.CommandOrProcedureName = query;
 
-            //input.CommandType = OracleCommandType.StoredProcedure;
-            //input.TimeoutSeconds = 60;
+            input.CommandType = OracleCommandType.StoredProcedure;
+            input.TimeoutSeconds = 60;
 
-            //output.OutputParameters = new OracleParameter[1];
-            //output.OutputParameters[0] = OracleParam;            
+            output.OutputParameters = new OracleParameter[1];
+            output.OutputParameters[0] = OracleParam;
 
-            //var result = ExecuteCommand.Execute(input, output);
+            var result = ExecuteCommand.Execute(input, output, _taskOptions);
 
-            //Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
+            Assert.AreEqual(System.Threading.Tasks.TaskStatus.RanToCompletion, result.Status);
         }
     }
 }
