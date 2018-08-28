@@ -1,6 +1,7 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+
+#pragma warning disable 1591
 
 namespace Frends.Community.Oracle.ExecuteCommand
 {
@@ -53,7 +54,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     }
 
     /// <summary>
-    /// Options for Oracle ExecuteCommand component
+    /// Output of Oracle ExecuteCommand component
     /// </summary>
     public class OutputProperties
     {
@@ -69,6 +70,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
         public OracleParameter[] OutputParameters { get; set; }
     }
 
+    /// <summary>
+    /// Options for Oracle ExecuteCommand component
+    /// </summary>
     public class Options
     {
         /// <summary>

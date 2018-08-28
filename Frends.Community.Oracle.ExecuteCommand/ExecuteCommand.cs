@@ -10,6 +10,8 @@ using System.Xml.Linq;
 using System.ComponentModel;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 
+#pragma warning disable 1591
+
 namespace Frends.Community.Oracle.ExecuteCommand
 {
     public class ExecuteCommand
