@@ -3,7 +3,7 @@
 namespace Frends.Community.Oracle.ExecuteCommand.Tests
 {
     [TestFixture]
-    //[Ignore("No way to automate this test without an Oracle instance.")]
+    [Ignore("No way to automate this test without an Oracle instance.")]
     public class ExecuteQueryTests
     {
         string connectionString = "Data Source=localhost;User Id=SYSTEM;Password=salasana1;Persist Security Info=True;";
