@@ -20,7 +20,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// Task for executing non-query commands and stored procedures in Oracle. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
         /// </summary>
         /// <param name="input">The input data for the task</param>
-        /// <param name="output">The options for the task</param>
+        /// <param name="output">The output of the task</param>
+        /// <param name="options">The options for the task</param>
         /// <returns>object { bool Success, string Message, dynamic Result }</returns>
         public async static Task<Output> Execute([PropertyTab] Input input,
             [PropertyTab]OutputProperties output,
