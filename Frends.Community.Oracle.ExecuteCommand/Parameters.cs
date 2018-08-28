@@ -1,6 +1,6 @@
-﻿using Frends.Tasks.Attributes;
-using System;
+﻿using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Frends.Community.Oracle.ExecuteCommand
 {
@@ -18,7 +18,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The Oracle DB connection string
         /// </summary>
         [DefaultValue("Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;")]
-        [DefaultDisplayType(DisplayType.Text)]
+        [DisplayFormat(DataFormatString = "Text")]
         public string ConnectionString { get; set; }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// Either the command to execute, or the name of the stored procedure to execute
         /// </summary>
         [DefaultValue("testprocedure")]
-        [DefaultDisplayType(DisplayType.Text)]
+        [DisplayFormat(DataFormatString = "Text")]
         public string CommandOrProcedureName { get; set; }
 
         /// <summary>
@@ -95,14 +95,14 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The name of the parameter
         /// </summary>
         [DefaultValue("Parameter Name")]
-        [DefaultDisplayType(DisplayType.Text)]
+        [DisplayFormat(DataFormatString = "Text")]
         public string Name { get; set; }
 
         /// <summary>
         /// The value of the parameter
         /// </summary>
         [DefaultValue("Value")]
-        [DefaultDisplayType(DisplayType.Text)]
+        [DisplayFormat(DataFormatString = "Text")]
         public dynamic Value { get; set; }
 
         /// <summary>
