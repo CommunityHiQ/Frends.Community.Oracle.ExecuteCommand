@@ -60,10 +60,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     input.oracleConnection = new OracleConnection(input.ConnectionString);
                     await input.oracleConnection.OpenAsync();
                 }
-
-
+                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, input.oracleConnection))
                 {
-                    command.CommandType = (CommandType)input.CommandType;
+                        command.CommandType = (CommandType)input.CommandType;
                     command.CommandTimeout = input.TimeoutSeconds;
                     if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
                     if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
@@ -124,7 +123,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         
         }
 
-        private static OracleParam CreateOracleParam(OwnOracleParameter parameter, ParameterDirection? direction = null)
+        private static OracleParam CreateOracleParam(OracleParametersForTask parameter, ParameterDirection? direction = null)
         {
             var newParam = new OracleParam()
             {
