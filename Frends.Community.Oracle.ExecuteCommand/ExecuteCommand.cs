@@ -4,6 +4,7 @@ using System;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -11,7 +12,6 @@ using System.ComponentModel;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 
 #pragma warning disable 1591
-
 namespace Frends.Community.Oracle.ExecuteCommand
 {
     public class ExecuteCommand
@@ -51,84 +51,80 @@ namespace Frends.Community.Oracle.ExecuteCommand
         private async static Task<Output> ExecuteOracleCommand(Input input, OutputProperties output, Options options)
         {
             using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
+            try
             {
-                try
+
+                if (input.oracleConnectionType == OracleConnectionType.CreateNewAndCloseIt ||
+                input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
                 {
-
-                    if (input.oracleConnectionType == OracleConnectionType.CreateNewAndCloseIt ||
-                        input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
-                    {
-                        input.oracleConnection = new OracleConnection(input.ConnectionString);
-                        await input.oracleConnection.OpenAsync();
-                    }
-
-
-                    using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
-                    {
-                        command.CommandType = (CommandType)input.CommandType;
-                        command.CommandTimeout = input.TimeoutSeconds;
-                        if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
-                        if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
-                        command.BindByName = input.BindParametersByName;
-
-                        // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
-                        var runCommand = command.ExecuteNonQueryAsync();
-                        int affectedRows = await runCommand;
-
-                        var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
-
-
-                        if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
-                        {
-                            return new Output { Success = true, Result = affectedRows };
-                        }
-
-                        //Builds xml document from Oracle output parameters
-                        var xDoc = new XDocument();
-                        var root = new XElement("Root");
-                        xDoc.Add(root);
-                        outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
-
-                        dynamic commandResult;
-                        // Affected rows are handled above!
-                        switch (output.DataReturnType)
-                        {
-                            case OracleCommandReturnType.JSONString:
-                                commandResult = JsonConvert.SerializeObject(outputOracleParams);
-                                break;
-                            case OracleCommandReturnType.XDocument:
-                                commandResult = xDoc;
-                                break;
-                            case OracleCommandReturnType.XmlString:
-                                commandResult = xDoc.ToString();
-                                break;
-                            default:
-                                throw new Exception("Unsupported DataReturnType.");
-                        }
-
-                        return new Output { Success = true, Result = commandResult };
-                    }
+                    input.oracleConnection = new OracleConnection(input.ConnectionString);
+                    await input.oracleConnection.OpenAsync();
                 }
-                catch (Exception e)
+
+
                 {
-                    throw e;
-                }
-                finally
-                {
-                    if (input.oracleConnectionType == OracleConnectionType.UseExistingAndKeepItAlive ||
-                        input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
+                    command.CommandType = (CommandType)input.CommandType;
+                    command.CommandTimeout = input.TimeoutSeconds;
+                    if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
+                    if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+                    command.BindByName = input.BindParametersByName;
+
+                    // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
+                    var runCommand = command.ExecuteNonQueryAsync();
+                    int affectedRows = await runCommand;
+
+                    var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
+
+                    if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
                     {
-                        // Close connection:
-                        input.oracleConnection.Dispose();
-                        input.oracleConnection.Close();
-                        OracleConnection.ClearPool(input.oracleConnection);
+                        return new Output { Success = true, Result = affectedRows };
                     }
+
+                    //Builds xml document from Oracle output parameters
+                    var xDoc = new XDocument();
+                    var root = new XElement("Root");
+                    xDoc.Add(root);
+                    outputOracleParams.ToList().ForEach(p => root.Add(ParameterToXElement(p)));
+
+                    dynamic commandResult;
+                    // Affected rows are handled above!
+                    switch (output.DataReturnType)
+                    {
+                        case OracleCommandReturnType.JSONString:
+                            commandResult = JsonConvert.SerializeObject(outputOracleParams);
+                            break;
+                        case OracleCommandReturnType.XDocument:
+                            commandResult = xDoc;
+                            break;
+                        case OracleCommandReturnType.XmlString:
+                            commandResult = xDoc.ToString();
+                            break;
+                        default:
+                            throw new Exception("Unsupported DataReturnType.");
+                    }
+
+                    return new Output { Success = true, Result = commandResult };
                 }
             }
-
-           
+            catch (Exception e)
+            {
+                throw e;
+            }
+            finally
+            {
+                if (input.oracleConnectionType == OracleConnectionType.UseExistingAndKeepItAlive ||
+                    input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
+                {
+                    // Close connection:
+                    input.oracleConnection.Dispose();
+                    input.oracleConnection.Close();
+                    OracleConnection.ClearPool(input.oracleConnection);
+                }
+            }
+        
         }
-        private static OracleParam CreateOracleParam(OracleParametersForTask parameter, ParameterDirection? direction = null)
+
+        private static OracleParam CreateOracleParam(OwnOracleParameter parameter, ParameterDirection? direction = null)
         {
             var newParam = new OracleParam()
             {
