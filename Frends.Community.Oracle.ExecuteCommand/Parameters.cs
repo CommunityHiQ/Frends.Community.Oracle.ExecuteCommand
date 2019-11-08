@@ -20,6 +20,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
     public class Input
     {
 
+        /// <summary>
+        /// Create new connection or not and close it if it is no longer used.
+        /// </summary>
         [DefaultValue(OracleConnectionType.CreateNewAndCloseIt)]
         public OracleConnectionType oracleConnectionType;
 

@@ -43,18 +43,19 @@ NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 
 | Property             | Type                 | Description                          | Example |
 | ---------------------| ---------------------| ------------------------------------ | ----- |
+| InputParameters | enum | Create new connection or not and close it if it is no longer used. | CreateNewAndCloseIt |
 | ConnectionString | string | Connection string to the oracle database | Data Source=localhost;User Id=<userid>;Password=<password>;Persist Security Info=True; |
 | CommandOrProcedureName | string | The SQL command or stored procedure to execute | INSERT INTO TestTable (textField) VALUES (:param1) |
 | CommandType | enum | The type of command to execute: command or stored procedure | Command |
 | DataReturnType | OracleCommandReturnType | Specifies in what format to return the results | XMLDocument |
 | BindParametersByName | bool | Whether to bind the parameters by name | false |
 | TimeoutSeconds | integer | The amount of seconds to let a query run before timeout | 666 |
-| InputParameters | OracleParameter[] |  Array with the oracle input parameters | n/a |
-| OutputParameters | OracleParameter[] |  Array with the oracle input parameters | n/a |
+| InputParameters | OracleParametersForTask[] |  Array with the oracle input parameters | n/a |
+| OutputParameters | OracleParametersForTask[] |  Array with the oracle input parameters | n/a |
 
 NOTE: the correct notation to use parameters in PL/SQL is :parameterName, not @parameterName as in T-SQL. See example query above.
 
-#### OracleParameter
+#### OracleParametersForTask
 
 | Property             | Type                 | Description                          | Example |
 | ---------------------| ---------------------| ------------------------------------ | ----- |
@@ -83,3 +84,5 @@ NOTE: the correct notation to use parameters in PL/SQL is :parameterName, not @p
 | 1.1.0 | Added description of return object to XML summary |
 | 1.2.0 | Reverted Frends.Tasks.Attributes to 1.2.0 |
 | 1.3.0 | Replaced Frends.Tasks.Attributes with System.ComponentModel |
+| 2.0.0 | Task now support returning ref cursor, also connection management was added.|
+
