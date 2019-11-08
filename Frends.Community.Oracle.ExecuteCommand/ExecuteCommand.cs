@@ -52,8 +52,16 @@ namespace Frends.Community.Oracle.ExecuteCommand
         {
             using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
             {
-                try {
-                    await oracleConnection.OpenAsync();
+                try
+                {
+
+                    if (input.oracleConnectionType == OracleConnectionType.CreateNewAndCloseIt ||
+                        input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
+                    {
+                        input.oracleConnection = new OracleConnection(input.ConnectionString);
+                        await input.oracleConnection.OpenAsync();
+                    }
+
 
                     using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, oracleConnection))
                     {
@@ -63,6 +71,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
                         if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
                         command.BindByName = input.BindParametersByName;
 
+                        // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
                         var runCommand = command.ExecuteNonQueryAsync();
                         int affectedRows = await runCommand;
 
@@ -106,16 +115,20 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 }
                 finally
                 {
-                    // Close connection:
-                    oracleConnection.Dispose();
-                    oracleConnection.Close();
-                    OracleConnection.ClearPool(oracleConnection);
+                    if (input.oracleConnectionType == OracleConnectionType.UseExistingAndKeepItAlive ||
+                        input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
+                    {
+                        // Close connection:
+                        input.oracleConnection.Dispose();
+                        input.oracleConnection.Close();
+                        OracleConnection.ClearPool(input.oracleConnection);
+                    }
                 }
             }
 
            
         }
-        private static OracleParam CreateOracleParam(OracleParameter parameter, ParameterDirection? direction = null)
+        private static OracleParam CreateOracleParam(OracleParametersForTask parameter, ParameterDirection? direction = null)
         {
             var newParam = new OracleParam()
             {

@@ -43,6 +43,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="TestConfigurationHandler">
+      <HintPath>Helpers\TestConfigurationHandler.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">

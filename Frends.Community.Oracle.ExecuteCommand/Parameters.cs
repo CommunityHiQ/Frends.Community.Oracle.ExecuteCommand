@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using Oracle.ManagedDataAccess.Client;
 using System.ComponentModel.DataAnnotations;
 
 #pragma warning disable 1591
@@ -8,6 +9,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
     #region Enums
     public enum OracleCommandType { StoredProcedure = 4, Command = 1 }
     public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString }
+
+    // CreateNewAndCloseIt is first and therefore 0 and therefore deafault. It also corresponds previous behavior. 
+    public enum OracleConnectionType { CreateNewAndCloseIt, CreateNewAndKeepItAlive, UseExistingAndCloseIt, UseExistingAndKeepItAlive }
     #endregion
 
     /// <summary>
@@ -15,12 +19,21 @@ namespace Frends.Community.Oracle.ExecuteCommand
     /// </summary>
     public class Input
     {
+
+        [DefaultValue(OracleConnectionType.CreateNewAndCloseIt)]
+        public OracleConnectionType oracleConnectionType;
+
         /// <summary>
         /// The Oracle DB connection string
         /// </summary>
+        [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.CreateNewAndCloseIt, OracleConnectionType.CreateNewAndKeepItAlive)]
         [DefaultValue("Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;")]
         [DisplayFormat(DataFormatString = "Text")]
         public string ConnectionString { get; set; }
+
+        [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.UseExistingAndCloseIt, OracleConnectionType.UseExistingAndKeepItAlive)]
+        public OracleConnection oracleConnection;
+
 
         /// <summary>
         /// The type of execution
@@ -38,7 +51,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <summary>
         /// The input parameters for the query
         /// </summary>
-        public OracleParameter[] InputParameters { get; set; }
+        public OracleParametersForTask[] InputParameters { get; set; }
 
         /// <summary>
         /// Whether to bind parameters by name
@@ -52,6 +65,15 @@ namespace Frends.Community.Oracle.ExecuteCommand
         [DefaultValue(30)]
         public int TimeoutSeconds { get; set; }
     }
+
+    public class OracleConnectionInformation
+    {
+
+
+        public OracleConnection oracleConnection;
+    }
+
+
 
     /// <summary>
     /// Output of Oracle ExecuteCommand component
@@ -67,7 +89,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <summary>
         /// The output parameters for the query
         /// </summary>
-        public OracleParameter[] OutputParameters { get; set; }
+        public OracleParametersForTask[] OutputParameters { get; set; }
     }
 
     /// <summary>
@@ -93,7 +115,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     /// <summary>
     /// Parameters for query
     /// </summary>
-    public class OracleParameter
+    public class OracleParametersForTask
     {
         /// <summary>
         /// The name of the parameter
