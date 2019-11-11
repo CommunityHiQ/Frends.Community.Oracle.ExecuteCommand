@@ -24,7 +24,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// Create new connection or not and close it if it is no longer used.
         /// </summary>
         [DefaultValue(OracleConnectionType.CreateNewAndCloseIt)]
-        public OracleConnectionType oracleConnectionType;
+        public OracleConnectionType oracleConnectionType { get; set; }
 
         /// <summary>
         /// The Oracle DB connection string
@@ -34,9 +34,17 @@ namespace Frends.Community.Oracle.ExecuteCommand
         [DisplayFormat(DataFormatString = "Text")]
         public string ConnectionString { get; set; }
 
-        [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.UseExistingAndCloseIt, OracleConnectionType.UseExistingAndKeepItAlive)]
-        public OracleConnection oracleConnection;
 
+        /// <summary>
+        /// The existing connection to Oracle db (instance of OracleConnection class). The connection is usually opened by previous oracle task and can be used again with #result.OracleConnection
+        /// </summary>
+        [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.UseExistingAndCloseIt, OracleConnectionType.UseExistingAndKeepItAlive)]
+        [DefaultValue("#result.oracleConnection")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public OracleConnectionInformation oracleConnectionInformation { get; set; }
+
+
+        public OracleConnection oracleConnection { get; set; }
 
         /// <summary>
         /// The type of execution
@@ -71,12 +79,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
     public class OracleConnectionInformation
     {
-
-
         public OracleConnection oracleConnection;
     }
-
-
 
     /// <summary>
     /// Output of Oracle ExecuteCommand component
@@ -113,6 +117,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
         public bool Success { get; set; }
         public string Message { get; set; }
         public dynamic Result { get; set; }
+
+        public OracleConnection oracleConnection { get; set; }
+
     }
 
     /// <summary>

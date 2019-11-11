@@ -4,7 +4,6 @@ using System;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -36,7 +35,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
             {
                 if (options.ThrowErrorOnFailure)
                     throw ex;
-                return new Output { Success = false, Message = ex.Message };
+                return new Output { Success = false, Message = ex.Message, oracleConnection = input.oracleConnectionInformation.oracleConnection };
             }
         }
 
@@ -57,10 +56,18 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 if (input.oracleConnectionType == OracleConnectionType.CreateNewAndCloseIt ||
                 input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
                 {
+
+                    if (input.oracleConnectionInformation == null)
+                    {
+                        input.oracleConnectionInformation = new OracleConnectionInformation();
+                    }
                     input.oracleConnection = new OracleConnection(input.ConnectionString);
-                    await input.oracleConnection.OpenAsync();
+
+                    input.oracleConnectionInformation.oracleConnection = input.oracleConnection;
+
+                    await input.oracleConnectionInformation.oracleConnection.OpenAsync();
                 }
-                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, input.oracleConnection))
+                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, input.oracleConnectionInformation.oracleConnection))
                 {
                         command.CommandType = (CommandType)input.CommandType;
                     command.CommandTimeout = input.TimeoutSeconds;
@@ -76,7 +83,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
                     if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
                     {
-                        return new Output { Success = true, Result = affectedRows };
+                        return new Output { Success = true, Result = affectedRows, oracleConnection = input.oracleConnectionInformation.oracleConnection };
                     }
 
                     //Builds xml document from Oracle output parameters
@@ -102,7 +109,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
                             throw new Exception("Unsupported DataReturnType.");
                     }
 
-                    return new Output { Success = true, Result = commandResult };
+                    return new Output { Success = true, Result = commandResult, oracleConnection = input.oracleConnectionInformation.oracleConnection };
                 }
             }
             catch (Exception e)
@@ -115,9 +122,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
                 {
                     // Close connection:
-                    input.oracleConnection.Dispose();
-                    input.oracleConnection.Close();
-                    OracleConnection.ClearPool(input.oracleConnection);
+                    input.oracleConnectionInformation.oracleConnection.Dispose();
+                    input.oracleConnectionInformation.oracleConnection.Close();
+                    OracleConnection.ClearPool(input.oracleConnectionInformation.oracleConnection);
                 }
             }
         
