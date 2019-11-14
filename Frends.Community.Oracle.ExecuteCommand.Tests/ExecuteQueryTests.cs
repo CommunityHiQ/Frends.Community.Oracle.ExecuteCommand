@@ -1,5 +1,12 @@
-﻿using NUnit.Framework;
+﻿using System;
+using System.Collections;
+using NUnit.Framework;
 using TestConfigurationHandler;
+using Oracle.ManagedDataAccess.Client;
+using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
+using System.Collections.Generic;
+using System.Data;
+
 
 namespace Frends.Community.Oracle.ExecuteCommand.Tests
 {
@@ -21,7 +28,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Creates a table that is used in other tests.
         /// </summary>
         [Test, Order(5)]
-        public async System.Threading.Tasks.Task ExecuteOracleCommandAsyncCreateTable()
+        public async System.Threading.Tasks.Task CreateTable()
         {
             var query = "CREATE TABLE TestTable(textField VARCHAR(255))";
 
@@ -43,7 +50,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Creates a stored procedure UnitTestProc that is used in other tests.
         /// </summary>
         [Test, Order(10)]
-        public async System.Threading.Tasks.Task ExecuteOracleCommandAsyncCreateProcedure()
+        public async System.Threading.Tasks.Task CreateProcedure()
         {
             var query = @"
                             CREATE PROCEDURE UnitTestProc (returnVal OUT VARCHAR2) AS
@@ -70,7 +77,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Insert data to the TestTable.
         /// </summary>
         [Test, Order(15)]
-        public async System.Threading.Tasks.Task ExecuteOracleCommandAsyncInsertValues()
+        public async System.Threading.Tasks.Task InsertValues()
         {
             var query = "INSERT INTO TestTable (textField) VALUES ('unit test text')";
 
@@ -92,7 +99,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Insert data to the TestTable using task parameters.
         /// </summary>
         [Test, Order(15)]
-        public async System.Threading.Tasks.Task ExecuteOracleCommandWithInsertValuesViaParametersAsync()
+        public async System.Threading.Tasks.Task InsertValuesViaParametersAsync()
         {
             var query = "INSERT INTO TestTable (textField) VALUES (:param1)";
 
@@ -103,7 +110,6 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
                 Value = "Text from parameter"
             };
 
-            var output = new OutputProperties();
             var input = new Input
             {
                 ConnectionString = connectionString,
@@ -115,6 +121,8 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             };
             input.InputParameters[0] = ownOracleParam;
 
+            var output = new OutputProperties();
+
             var result = await ExecuteCommand.Execute(input, output, _taskOptions);
 
             Assert.AreEqual(true, result.Success);
@@ -124,18 +132,11 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Execute stored procedure UnitTestProc.
         /// </summary>
         [Test, Order(20)]
-        public async System.Threading.Tasks.Task ExecuteOracleStoredProcedureWithOutParamAsync()
+        public async System.Threading.Tasks.Task ExecuteStoredProcedureWithOutputParamAsync()
         {
             var query = "UnitTestProc";
 
-            var OracleParam = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.Varchar2,
-                Name = "returnVal",
-                Size = 255
-            };
 
-            var output = new OutputProperties();
             var input = new Input
             {
                 ConnectionString = connectionString,
@@ -145,6 +146,15 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
                 TimeoutSeconds = 60
             };
 
+            var OracleParam = new OracleParametersForTask
+            {
+                DataType = OracleParametersForTask.ParameterDataType.Varchar2,
+                Name = "returnVal",
+                Size = 255
+            };
+
+            var output = new OutputProperties();
+
             output.OutputParameters = new OracleParametersForTask[1];
             output.OutputParameters[0] = OracleParam;
 
@@ -152,6 +162,136 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             Assert.AreEqual(true, result.Success);
         }
+
+
+        /// <summary>
+        /// Get ref cursor and pass it to another task.
+        /// </summary>
+        [Test, Order(20)]
+        public async System.Threading.Tasks.Task OracleRefCursorCode()
+        {
+            // https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
+            OracleConnection conn = new OracleConnection(connectionString);
+                //("User Id=scott; Password=tiger; Data Source=oracle");
+
+            conn.Open(); // Open the connection to the database
+
+            // Command text for getting the REF Cursor as OUT parameter
+            String cmdTxt1 = "begin open :1 for select col1 from test; end;";
+
+            // Command text to pass the REF Cursor as IN parameter
+            String cmdTxt2 = "begin testSP (:1, :2); end;";
+
+            // Create the command object for executing cmdTxt1 and cmdTxt2
+            OracleCommand cmd = new OracleCommand(cmdTxt1, conn);
+
+            // Bind the Ref cursor to the PL/SQL stored procedure
+            OracleParameter outRefPrm = cmd.Parameters.Add("outRefPrm",
+                OracleDbType.RefCursor, DBNull.Value, ParameterDirection.Output);
+
+            cmd.ExecuteNonQuery(); // Execute the anonymous PL/SQL block
+
+            // Reset the command object to execute another anonymous PL/SQL block
+            cmd.Parameters.Clear();
+            cmd.CommandText = cmdTxt2;
+
+            var cmd2 = new OracleCommand(cmdTxt2, conn);
+
+
+            // REF Cursor obtained from previous execution is passed to this 
+            // procedure as IN parameter
+            OracleParameter inRefPrm = cmd2.Parameters.Add("inRefPrm",
+                OracleDbType.RefCursor, outRefPrm.Value, ParameterDirection.Input);
+
+            // Bind another Number parameter to get the REF Cursor column value
+            OracleParameter outNumPrm = cmd2.Parameters.Add("outNumPrm",
+                OracleDbType.Int32, DBNull.Value, ParameterDirection.Output);
+
+            cmd2.ExecuteNonQuery(); //Execute the stored procedure
+
+            // Display the out parameter value
+            Console.WriteLine("out parameter is: " + outNumPrm.Value.ToString());
+        }
+
+        /// <summary>
+        /// Get ref cursor and pass it to another task.
+        /// </summary>
+        [Test, Order(20)]
+        public async System.Threading.Tasks.Task GatAndUseRefCursor()
+        {
+            // Replicate test OracleRefCursorCode
+
+            //////////////////////////////////////////////////
+            /// Get refcursor
+
+            var OracleParam = new OracleParametersForTask
+            {
+                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
+                Name = "outRefPrm",
+                Size = 0
+            };
+
+            var output = new OutputProperties
+            {
+                DataReturnType = OracleCommandReturnType.Parameters
+            };
+
+            var input = new Input
+            {
+                ConnectionString = connectionString,
+                CommandOrProcedureName = "begin open :1 for select col1 from test; end;",
+                CommandType = OracleCommandType.Command,
+                TimeoutSeconds = 60
+            };
+
+            output.OutputParameters = new OracleParametersForTask[1];
+            output.OutputParameters[0] = OracleParam;
+
+            var result = await ExecuteCommand.Execute(input, output, _taskOptions);
+
+            //////////////////////////////////////////////////
+            /// Use refcursor
+
+            var secondInput = new Input
+            {
+                CommandOrProcedureName = "testSP",
+                oracleConnectionType = OracleConnectionType.UseExistingAndCloseIt,
+                OracleConnectionInformation = result.OracleConnectionInformation,
+                CommandType = OracleCommandType.StoredProcedure,
+                InputParameters = new OracleParametersForTask[1],
+                TimeoutSeconds = 60
+            };
+
+            OracleParametersForTask secondInputParameters = new OracleParametersForTask
+            {
+                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
+                Name = "param1",
+                //Value = ((IList<OracleParam>)result.Result)[0], //DBNull.Value
+                Value = result.Result[0].Value,
+                Size = 0
+            };
+
+            secondInput.InputParameters[0] = secondInputParameters;
+
+            var secondOutputParameters = new OracleParametersForTask
+            {
+                DataType = OracleParametersForTask.ParameterDataType.Int32,
+                Name = "param2",
+                Value = DBNull.Value,
+                Size = 0
+            };
+
+            var secondOutput = new OutputProperties();
+
+            secondOutput.OutputParameters = new OracleParametersForTask[1];
+            secondOutput.OutputParameters[0] = secondOutputParameters;
+
+            var secondResult = await ExecuteCommand.Execute(secondInput, secondOutput, _taskOptions);
+
+            Assert.AreEqual("<Root>\r\n  <param2>1</param2>\r\n</Root>", secondResult.Result);
+
+        }
+
 
         /// <summary>
         /// Drop TestTable and UnitTestProc.

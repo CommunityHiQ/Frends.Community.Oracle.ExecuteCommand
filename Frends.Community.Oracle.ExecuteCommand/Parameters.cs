@@ -8,7 +8,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
 {
     #region Enums
     public enum OracleCommandType { StoredProcedure = 4, Command = 1 }
-    public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString }
+    public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString, Parameters }
 
     // CreateNewAndCloseIt is first and therefore 0 and therefore deafault. It also corresponds previous behavior. 
     public enum OracleConnectionType { CreateNewAndCloseIt, CreateNewAndKeepItAlive, UseExistingAndCloseIt, UseExistingAndKeepItAlive }
@@ -39,12 +39,12 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// The existing connection to Oracle db (instance of OracleConnection class). The connection is usually opened by previous oracle task and can be used again with #result.OracleConnection
         /// </summary>
         [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.UseExistingAndCloseIt, OracleConnectionType.UseExistingAndKeepItAlive)]
-        [DefaultValue("#result.oracleConnection")]
+        [DefaultValue("")]
         [DisplayFormat(DataFormatString = "Expression")]
-        public OracleConnectionInformation oracleConnectionInformation { get; set; }
+        public OracleConnectionInformation OracleConnectionInformation { get; set; }
 
 
-        public OracleConnection oracleConnection { get; set; }
+        public dynamic oracleConnection { get; set; }
 
         /// <summary>
         /// The type of execution
@@ -75,11 +75,6 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// </summary>
         [DefaultValue(30)]
         public int TimeoutSeconds { get; set; }
-    }
-
-    public class OracleConnectionInformation
-    {
-        public OracleConnection oracleConnection;
     }
 
     /// <summary>
@@ -118,9 +113,20 @@ namespace Frends.Community.Oracle.ExecuteCommand
         public string Message { get; set; }
         public dynamic Result { get; set; }
 
-        public OracleConnection oracleConnection { get; set; }
+        public dynamic oracleConnection { get; set; }
+
+        public OracleConnectionInformation OracleConnectionInformation { get; set; }
 
     }
+
+    /// <summary>
+    /// Container class for Oracle connection.
+    /// </summary>
+    public class OracleConnectionInformation
+    {
+        public OracleConnection Connection;
+    }
+
 
     /// <summary>
     /// Parameters for query

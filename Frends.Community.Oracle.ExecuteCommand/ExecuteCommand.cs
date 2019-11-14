@@ -35,7 +35,12 @@ namespace Frends.Community.Oracle.ExecuteCommand
             {
                 if (options.ThrowErrorOnFailure)
                     throw ex;
-                return new Output { Success = false, Message = ex.Message, oracleConnection = input.oracleConnectionInformation.oracleConnection };
+                return new Output
+                {
+                    Success = false, Message = ex.Message,
+                    OracleConnectionInformation = new OracleConnectionInformation
+                        {Connection = input.OracleConnectionInformation.Connection}
+                };
             }
         }
 
@@ -49,27 +54,37 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <returns>object { bool Success, string Message, dynamic Result }</returns>
         private async static Task<Output> ExecuteOracleCommand(Input input, OutputProperties output, Options options)
         {
-            using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
+            //using (OracleConnection oracleConnection = new OracleConnection(input.ConnectionString))
             try
             {
-
+                // Create new connection if asked to do so.
                 if (input.oracleConnectionType == OracleConnectionType.CreateNewAndCloseIt ||
                 input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
                 {
 
-                    if (input.oracleConnectionInformation == null)
+                    if (input.OracleConnectionInformation == null)
                     {
-                        input.oracleConnectionInformation = new OracleConnectionInformation();
+                        input.OracleConnectionInformation = new OracleConnectionInformation();
                     }
-                    input.oracleConnection = new OracleConnection(input.ConnectionString);
 
-                    input.oracleConnectionInformation.oracleConnection = input.oracleConnection;
+                    input.OracleConnectionInformation.Connection = new OracleConnection(input.ConnectionString);
 
-                    await input.oracleConnectionInformation.oracleConnection.OpenAsync();
+                        await input.OracleConnectionInformation.Connection.OpenAsync();
                 }
-                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, input.oracleConnectionInformation.oracleConnection))
+                // Otherwise check that connection is given
+                else if (input.oracleConnectionType == OracleConnectionType.UseExistingAndKeepItAlive ||
+                         input.oracleConnectionType == OracleConnectionType.UseExistingAndCloseIt)
                 {
-                        command.CommandType = (CommandType)input.CommandType;
+
+                    if (input.OracleConnectionInformation == null)
+                    {
+                        throw new Exception("Connection must be defined in parameters, when using existing connection.");
+                    }
+                }
+
+                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, input.OracleConnectionInformation.Connection))
+                {
+                    command.CommandType = (CommandType)input.CommandType;
                     command.CommandTimeout = input.TimeoutSeconds;
                     if (input.InputParameters != null) command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
                     if (output.OutputParameters != null) command.Parameters.AddRange(output.OutputParameters.Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
@@ -81,9 +96,26 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
                     var outputOracleParams = command.Parameters.Cast<OracleParam>().Where(p => p.Direction == ParameterDirection.Output);
 
+                    //var moreParams = OracleParam[1];
+
                     if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
                     {
-                        return new Output { Success = true, Result = affectedRows, oracleConnection = input.oracleConnectionInformation.oracleConnection };
+                        return new Output { Success = true, Result = affectedRows, OracleConnectionInformation = new OracleConnectionInformation
+                            { Connection = input.OracleConnectionInformation.Connection }
+                        };
+                    }
+                    else if (output.DataReturnType == OracleCommandReturnType.Parameters)
+
+                    {
+                        return new Output
+                        {
+                            Success = true,
+                            //Result = command.Parameters,
+                            Result = outputOracleParams.ToList(),
+                            OracleConnectionInformation = new OracleConnectionInformation
+                                { Connection = input.OracleConnectionInformation.Connection }
+                        };
+
                     }
 
                     //Builds xml document from Oracle output parameters
@@ -109,7 +141,9 @@ namespace Frends.Community.Oracle.ExecuteCommand
                             throw new Exception("Unsupported DataReturnType.");
                     }
 
-                    return new Output { Success = true, Result = commandResult, oracleConnection = input.oracleConnectionInformation.oracleConnection };
+                    return new Output { Success = true, Result = commandResult,
+                        OracleConnectionInformation = new OracleConnectionInformation
+                            { Connection = input.OracleConnectionInformation.Connection }};
                 }
             }
             catch (Exception e)
@@ -122,12 +156,11 @@ namespace Frends.Community.Oracle.ExecuteCommand
                     input.oracleConnectionType == OracleConnectionType.CreateNewAndKeepItAlive)
                 {
                     // Close connection:
-                    input.oracleConnectionInformation.oracleConnection.Dispose();
-                    input.oracleConnectionInformation.oracleConnection.Close();
-                    OracleConnection.ClearPool(input.oracleConnectionInformation.oracleConnection);
+                    input.OracleConnectionInformation.Connection.Dispose();
+                    input.OracleConnectionInformation.Connection.Close();
+                    OracleConnection.ClearPool(input.OracleConnectionInformation.Connection);
                 }
             }
-        
         }
 
         private static OracleParam CreateOracleParam(OracleParametersForTask parameter, ParameterDirection? direction = null)

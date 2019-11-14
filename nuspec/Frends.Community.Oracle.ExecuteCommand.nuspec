@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Frends.Community.Oracle.ExecuteCommand</id>
-    <version>1.3.11</version>
+    <version>1.3.16</version>
     <title>Frends Community Oracle ExecuteCommand</title>
     <authors>HiQ Finland</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
