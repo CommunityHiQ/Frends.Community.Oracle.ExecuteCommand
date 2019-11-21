@@ -7,7 +7,6 @@ using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 using System.Collections.Generic;
 using System.Data;
 
-
 namespace Frends.Community.Oracle.ExecuteCommand.Tests
 {
     [TestFixture]
@@ -197,7 +196,6 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             var cmd2 = new OracleCommand(cmdTxt2, conn);
 
-
             // REF Cursor obtained from previous execution is passed to this 
             // procedure as IN parameter
             OracleParameter inRefPrm = cmd2.Parameters.Add("inRefPrm",
@@ -219,79 +217,12 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         [Test, Order(20)]
         public async System.Threading.Tasks.Task GatAndUseRefCursor()
         {
-            // Replicate test OracleRefCursorCode
+            // Replicate of test OracleRefCursorCode, only using frends tasks 
 
-            //////////////////////////////////////////////////
-            /// Get refcursor
-
-            var OracleParam = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
-                Name = "outRefPrm",
-                Size = 0
-            };
-
-            var output = new OutputProperties
-            {
-                DataReturnType = OracleCommandReturnType.Parameters
-            };
-
-            var input = new Input
-            {
-                ConnectionString = connectionString,
-                CommandOrProcedureName = "begin open :1 for select col1 from test; end;",
-                CommandType = OracleCommandType.Command,
-                TimeoutSeconds = 60
-            };
-
-            output.OutputParameters = new OracleParametersForTask[1];
-            output.OutputParameters[0] = OracleParam;
-
-            var result = await ExecuteCommand.Execute(input, output, _taskOptions);
-
-            //////////////////////////////////////////////////
-            /// Use refcursor
-
-            var secondInput = new Input
-            {
-                CommandOrProcedureName = "testSP",
-                oracleConnectionType = OracleConnectionType.UseExistingAndCloseIt,
-                OracleConnectionInformation = result.OracleConnectionInformation,
-                CommandType = OracleCommandType.StoredProcedure,
-                InputParameters = new OracleParametersForTask[1],
-                TimeoutSeconds = 60
-            };
-
-            OracleParametersForTask secondInputParameters = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
-                Name = "param1",
-                //Value = ((IList<OracleParam>)result.Result)[0], //DBNull.Value
-                Value = result.Result[0].Value,
-                Size = 0
-            };
-
-            secondInput.InputParameters[0] = secondInputParameters;
-
-            var secondOutputParameters = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.Int32,
-                Name = "param2",
-                Value = DBNull.Value,
-                Size = 0
-            };
-
-            var secondOutput = new OutputProperties();
-
-            secondOutput.OutputParameters = new OracleParametersForTask[1];
-            secondOutput.OutputParameters[0] = secondOutputParameters;
-
-            var secondResult = await ExecuteCommand.Execute(secondInput, secondOutput, _taskOptions);
+            var secondResult = await ExecuteCommand.GatAndUseRefCursor();
 
             Assert.AreEqual("<Root>\r\n  <param2>1</param2>\r\n</Root>", secondResult.Result);
-
         }
-
 
         /// <summary>
         /// Drop TestTable and UnitTestProc.

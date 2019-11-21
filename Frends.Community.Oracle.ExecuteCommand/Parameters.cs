@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Oracle.ManagedDataAccess.Client;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
 #pragma warning disable 1591
 
@@ -19,7 +20,6 @@ namespace Frends.Community.Oracle.ExecuteCommand
     /// </summary>
     public class Input
     {
-
         /// <summary>
         /// Create new connection or not and close it if it is no longer used.
         /// </summary>
@@ -34,17 +34,14 @@ namespace Frends.Community.Oracle.ExecuteCommand
         [DisplayFormat(DataFormatString = "Text")]
         public string ConnectionString { get; set; }
 
-
         /// <summary>
-        /// The existing connection to Oracle db (instance of OracleConnection class). The connection is usually opened by previous oracle task and can be used again with #result.OracleConnection
+        /// The existing connection to Oracle db (instance of OracleConnection class). The connection is usually opened by previous oracle task and can be used again with #result.Connection
         /// </summary>
         [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.UseExistingAndCloseIt, OracleConnectionType.UseExistingAndKeepItAlive)]
         [DefaultValue("")]
         [DisplayFormat(DataFormatString = "Expression")]
-        public OracleConnectionInformation OracleConnectionInformation { get; set; }
-
-
-        public dynamic oracleConnection { get; set; }
+        [JsonIgnore]
+        public dynamic Connection { get; set; }
 
         /// <summary>
         /// The type of execution
@@ -111,21 +108,17 @@ namespace Frends.Community.Oracle.ExecuteCommand
     {
         public bool Success { get; set; }
         public string Message { get; set; }
+
         public dynamic Result { get; set; }
 
-        public dynamic oracleConnection { get; set; }
 
-        public OracleConnectionInformation OracleConnectionInformation { get; set; }
-
+        /// <summary>
+        /// Instance of existing OracleConnection
+        /// </summary>
+        [JsonIgnore]
+        public dynamic Connection { get; set; }
     }
 
-    /// <summary>
-    /// Container class for Oracle connection.
-    /// </summary>
-    public class OracleConnectionInformation
-    {
-        public OracleConnection Connection;
-    }
 
 
     /// <summary>
