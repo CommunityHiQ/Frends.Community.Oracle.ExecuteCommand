@@ -162,14 +162,13 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             Assert.AreEqual(true, result.Success);
         }
 
-
         /// <summary>
         /// Get ref cursor and pass it to another task.
         /// </summary>
         [Test, Order(20)]
         public async System.Threading.Tasks.Task OracleRefCursorCode()
         {
-            // https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
+            
             OracleConnection conn = new OracleConnection(connectionString);
                 //("User Id=scott; Password=tiger; Data Source=oracle");
 
@@ -217,9 +216,9 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         [Test, Order(20)]
         public async System.Threading.Tasks.Task GatAndUseRefCursor()
         {
-            // Replicate of test OracleRefCursorCode, only using frends tasks 
 
-            var secondResult = await ExecuteCommand.GatAndUseRefCursor();
+
+            var secondResult = await ExecuteCommand.GatAndUseRefCursor(connectionString);
 
             Assert.AreEqual("<Root>\r\n  <param2>1</param2>\r\n</Root>", secondResult.Result);
         }

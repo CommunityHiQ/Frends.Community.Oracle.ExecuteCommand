@@ -11,8 +11,6 @@ namespace Frends.Community.Oracle.ExecuteCommand
     public enum OracleCommandType { StoredProcedure = 4, Command = 1 }
     public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString, Parameters }
 
-    // CreateNewAndCloseIt is first and therefore 0 and therefore deafault. It also corresponds previous behavior. 
-    public enum OracleConnectionType { CreateNewAndCloseIt, CreateNewAndKeepItAlive, UseExistingAndCloseIt, UseExistingAndKeepItAlive }
     #endregion
 
     /// <summary>
@@ -20,28 +18,13 @@ namespace Frends.Community.Oracle.ExecuteCommand
     /// </summary>
     public class Input
     {
-        /// <summary>
-        /// Create new connection or not and close it if it is no longer used.
-        /// </summary>
-        [DefaultValue(OracleConnectionType.CreateNewAndCloseIt)]
-        public OracleConnectionType oracleConnectionType { get; set; }
 
         /// <summary>
         /// The Oracle DB connection string
         /// </summary>
-        [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.CreateNewAndCloseIt, OracleConnectionType.CreateNewAndKeepItAlive)]
         [DefaultValue("Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));User Id=myUsername;Password=myPassword;")]
         [DisplayFormat(DataFormatString = "Text")]
         public string ConnectionString { get; set; }
-
-        /// <summary>
-        /// The existing connection to Oracle db (instance of OracleConnection class). The connection is usually opened by previous oracle task and can be used again with #result.Connection
-        /// </summary>
-        [UIHint(nameof(oracleConnectionType), "", OracleConnectionType.UseExistingAndCloseIt, OracleConnectionType.UseExistingAndKeepItAlive)]
-        [DefaultValue("")]
-        [DisplayFormat(DataFormatString = "Expression")]
-        [JsonIgnore]
-        public dynamic Connection { get; set; }
 
         /// <summary>
         /// The type of execution
@@ -110,16 +93,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         public string Message { get; set; }
 
         public dynamic Result { get; set; }
-
-
-        /// <summary>
-        /// Instance of existing OracleConnection
-        /// </summary>
-        [JsonIgnore]
-        public dynamic Connection { get; set; }
     }
-
-
 
     /// <summary>
     /// Parameters for query
