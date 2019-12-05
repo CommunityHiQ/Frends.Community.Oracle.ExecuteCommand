@@ -89,10 +89,30 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
     public class Output
     {
+        /// <summary>
+        /// True if task was succesful. False if there was a error and it is not thrown.
+        /// </summary>
         public bool Success { get; set; }
+
+        /// <summary>
+        /// Possible error message.
+        /// </summary>
         public string Message { get; set; }
 
+        /// <summary>
+        /// Result. Content and data type depends on task options.
+        /// </summary>
         public dynamic Result { get; set; }
+    }
+
+    public class RefCursorToJTokenInput
+    {
+        /// <summary>
+        /// Ref cursor. Must be type OracleParameter.
+        /// </summary>
+        [DefaultValue("#result.Result[0]")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public dynamic Refcursor { get; set; }
     }
 
     /// <summary>

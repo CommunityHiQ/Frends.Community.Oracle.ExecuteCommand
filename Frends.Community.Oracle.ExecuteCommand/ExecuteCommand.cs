@@ -19,7 +19,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
 {
     public class ExecuteCommand
     {
-        private static readonly ConcurrentDictionary<string, OracleConnection> ConnectionCache = new ConcurrentDictionary<string, OracleConnection>();
+        private static readonly ConcurrentDictionary<string, OracleConnection> ConnectionCache =
+            new ConcurrentDictionary<string, OracleConnection>();
 
         public static void ClearClientCache()
         {
@@ -33,12 +34,13 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <param name="output">The output of the task</param>
         /// <param name="options">The options for the task</param>
         /// <returns>object { bool Success, string Message, dynamic Result }</returns>
-        public async static Task<Output> Execute(Input input, OutputProperties output, Options options)
+        public async static Task<Output> Execute([PropertyTab]Input input, [PropertyTab]OutputProperties output, [PropertyTab]Options options)
         {
-            OracleConnection Connection = null;
 
             try
             {
+                OracleConnection Connection = null;
+
                 // Get connection from cache, or create a new one
                 Connection = GetConnection(input.ConnectionString);
 
@@ -46,81 +48,88 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 {
                     await Connection.OpenAsync();
                 }
-                
+
                 using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, Connection))
                 {
                     command.CommandType = (CommandType) input.CommandType;
                     command.CommandTimeout = input.TimeoutSeconds;
-                    try
-                    {
-                        if (input.InputParameters != null)
-                            command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x)).ToArray());
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        throw new ArgumentException("Can't add input parameters'", ex);
-                    }
 
-                    try
-                    {
-                        if (output.OutputParameters != null)
-                            command.Parameters.AddRange(output.OutputParameters
-                                .Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
-                    }
+                    if (input.InputParameters != null)
+                        command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x))
+                            .ToArray());
 
-                    catch (ArgumentException ex)
-                    {
-                        throw new ArgumentException("Can't add output parameters'", ex);
-                    }
+                    if (output.OutputParameters != null)
+                        command.Parameters.AddRange(output.OutputParameters
+                            .Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
 
-                    try
-                    {
-                        command.BindByName = input.BindParametersByName;
-                    }
-
-                    catch (ArgumentException ex)
-                    {
-                        throw new ArgumentException("Can't bind parameters by name parameters'", ex);
-                    }
+                    command.BindByName = input.BindParametersByName;
 
                     int affectedRows = 0;
-                    try
-                    {
-                        // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
-                        var runCommand = command.ExecuteNonQueryAsync();
-                        affectedRows = await runCommand;
 
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("Error in executing command.", ex);
-                    }
+                    // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
+                    var runCommand = command.ExecuteNonQueryAsync();
+                    affectedRows = await runCommand;
 
-                    System.Collections.Generic.IEnumerable<OracleParam> outputOracleParams = null;
-                    try
-                    {
-                        outputOracleParams = command.Parameters.Cast<OracleParam>()
-                            .Where(p => p.Direction == ParameterDirection.Output);
+                    IEnumerable<OracleParam> outputOracleParams = null;
 
-                        return HandleDataset(outputOracleParams, affectedRows, output);
+                    outputOracleParams = command.Parameters.Cast<OracleParam>()
+                        .Where(p => p.Direction == ParameterDirection.Output);
 
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("Error in executing processing returned parameters/data.", ex);
-                    }
+                    return HandleDataset(outputOracleParams, affectedRows, output);
                 }
+
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                throw e;
+                if (options.ThrowErrorOnFailure)
+                    throw ex;
+                return new Output {Success = false, Message = ex.Message};
             }
 
         }
 
-        private static Output HandleDataset(IEnumerable<OracleParam> outputOracleParams, int affectedRows, OutputProperties output)
-        {
 
+        /// <summary>
+        /// Reads data using ref cursor. Connection used to get ref cursor must be still open, when using this task. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
+        /// </summary>
+        /// <param name="input">The ref cursor.</param>
+        /// <returns>object { bool Success, string Message, dynamic Result }</returns>
+        public static Output RefCursorToJToken(RefCursorToJTokenInput input)
+        {
+            if (input.Refcursor.GetType() != typeof(OracleParameter))
+            {
+                throw new ArgumentException("Parameter must be type: OracleParameter.");
+            }
+
+            OracleDataReader dataReader = ((OracleRefCursor) input.Refcursor.Value).GetDataReader();
+
+            var RowList = new List<Dictionary<string, object>>();
+
+            while (dataReader.Read())
+            {
+                var ColList = new Dictionary<string, object>();
+                int i = 0;
+
+                // Find the column names.
+                foreach (DataRow row in dataReader.GetSchemaTable().Rows)
+                {
+                    ColList.Add(row[0].ToString(), dataReader[i]);
+                    i++;
+                }
+                RowList.Add(ColList);
+            }
+
+            return new Output
+            {
+                Success = true,
+                Result = JToken.FromObject(RowList)
+            };
+        }
+
+        #region HelperFunctions
+        private static Output HandleDataset(IEnumerable<OracleParam> outputOracleParams, int affectedRows,
+    OutputProperties output)
+        {
             if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
             {
                 return new Output
@@ -170,90 +179,6 @@ namespace Frends.Community.Oracle.ExecuteCommand
             };
         }
 
-        public static async Task<Output> GatAndUseRefCursor(string ConnectionString)
-        {
-
-            // Replicate of test of  https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
-
-            string connectionString = ConnectionString;
-            Options _taskOptions = new Options {ThrowErrorOnFailure = true};
-
-            //////////////////////////////////////////////////
-            /// Get refcursor
-
-            var OracleParam = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
-                Name = "outRefPrm",
-                Value = DBNull.Value,
-                Size = 0
-            };
-
-            var output = new OutputProperties
-            {
-                DataReturnType = OracleCommandReturnType.Parameters
-            };
-
-            var input = new Input
-            {
-                ConnectionString = connectionString,
-                CommandOrProcedureName = "begin open :1 for select col1 from test; end;",
-                CommandType = OracleCommandType.Command,
-                BindParametersByName = false,
-                TimeoutSeconds = 60
-            };
-
-            output.OutputParameters = new OracleParametersForTask[1];
-            output.OutputParameters[0] = OracleParam;
-
-            var result = await ExecuteCommand.Execute(input, output, _taskOptions);
-
-            //////////////////////////////////////////////////
-            /// Use refcursor
-
-            var secondInput = new Input
-            {
-                ConnectionString = connectionString,
-                CommandOrProcedureName = "testSP",
-                CommandType = OracleCommandType.StoredProcedure,
-                InputParameters = new OracleParametersForTask[1],
-                BindParametersByName = false,
-                TimeoutSeconds = 60
-            };
-
-            OracleParametersForTask secondInputParameters = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
-                Name = "param1",
-                // Value = result.Result[0].Value,
-                Value = result.Result[0].Value,
-                Size = 0
-            };
-
-            secondInput.InputParameters[0] = secondInputParameters;
-
-            var secondOutputParameters = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.Int32,
-                Name = "param2",
-                Value = DBNull.Value,
-                Size = 0
-            };
-
-            var secondOutput = new OutputProperties
-            {
-                OutputParameters = new OracleParametersForTask[1],
-                DataReturnType = OracleCommandReturnType.XmlString
-            };
-
-            secondOutput.OutputParameters[0] = secondOutputParameters;
-
-            var secondResult = await ExecuteCommand.Execute(secondInput, secondOutput, _taskOptions);
-
-            return secondResult;
-        }
-        
-        #region HelperFunctions
         private static OracleConnection GetConnection(string connectionString)
         {
             return ConnectionCache.GetOrAdd(connectionString, (opts) =>
