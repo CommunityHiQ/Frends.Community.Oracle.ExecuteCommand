@@ -164,55 +164,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             Assert.AreEqual(true, result.Success);
         }
-
-        /// <summary>
-        /// Get ref cursor and pass it to another task.
-        /// </summary>
-        [Test, Order(20)]
-        public async System.Threading.Tasks.Task OracleRefCursorCode()
-        {
-            
-            OracleConnection conn = new OracleConnection(connectionString);
-                //("User Id=scott; Password=tiger; Data Source=oracle");
-
-            conn.Open(); // Open the connection to the database
-
-            // Command text for getting the REF Cursor as OUT parameter
-            String cmdTxt1 = "begin open :1 for select col1 from test; end;";
-
-            // Command text to pass the REF Cursor as IN parameter
-            String cmdTxt2 = "begin testSP (:1, :2); end;";
-
-            // Create the command object for executing cmdTxt1 and cmdTxt2
-            OracleCommand cmd = new OracleCommand(cmdTxt1, conn);
-
-            // Bind the Ref cursor to the PL/SQL stored procedure
-            OracleParameter outRefPrm = cmd.Parameters.Add("outRefPrm",
-                OracleDbType.RefCursor, DBNull.Value, ParameterDirection.Output);
-
-            cmd.ExecuteNonQuery(); // Execute the anonymous PL/SQL block
-
-            // Reset the command object to execute another anonymous PL/SQL block
-            cmd.Parameters.Clear();
-            cmd.CommandText = cmdTxt2;
-
-            var cmd2 = new OracleCommand(cmdTxt2, conn);
-
-            // REF Cursor obtained from previous execution is passed to this 
-            // procedure as IN parameter
-            OracleParameter inRefPrm = cmd2.Parameters.Add("inRefPrm",
-                OracleDbType.RefCursor, outRefPrm.Value, ParameterDirection.Input);
-
-            // Bind another Number parameter to get the REF Cursor column value
-            OracleParameter outNumPrm = cmd2.Parameters.Add("outNumPrm",
-                OracleDbType.Int32, DBNull.Value, ParameterDirection.Output);
-
-            cmd2.ExecuteNonQuery(); //Execute the stored procedure
-
-            // Display the out parameter value
-            Console.WriteLine("out parameter is: " + outNumPrm.Value.ToString());
-        }
-
+        
         /// <summary>
         /// Get ref cursor and pass it to another task.
         /// </summary>
@@ -241,7 +193,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             /
             */
 
-            // Note this kind of usage of refcursors don't work in frends.
+            // Note this kind of usage of ref cursors don't work in frends. When run in frends task doesn't accept ref cursors as input parameters.
 
             Options _taskOptions = new Options { ThrowErrorOnFailure = true };
 
@@ -320,60 +272,6 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             Assert.AreEqual("<Root>\r\n  <param2>1</param2>\r\n</Root>", secondResult.Result);
         }
 
-        /*
-        /// <summary>
-        /// TOFO
-        /// </summary>
-        [Test, Order(20)]
-        public async System.Threading.Tasks.Task GatAndUseRefCursorToJtoken()
-        {
-
-            // Replicate of test of  https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
-
-            Options _taskOptions = new Options { ThrowErrorOnFailure = true };
-
-            //////////////////////////////////////////////////
-            /// Get refcursor
-
-            var OracleParam = new OracleParametersForTask
-            {
-                DataType = OracleParametersForTask.ParameterDataType.RefCursor,
-                Name = "outRefPrm",
-                Value = DBNull.Value,
-                Size = 0
-            };
-
-            var output = new OutputProperties
-            {
-                DataReturnType = OracleCommandReturnType.Parameters
-            };
-
-            var input = new Input
-            {
-                ConnectionString = connectionString,
-                CommandOrProcedureName = "begin open :1 for select col1 from test; end;",
-                CommandType = OracleCommandType.Command,
-                BindParametersByName = false,
-                TimeoutSeconds = 60
-            };
-
-            output.OutputParameters = new OracleParametersForTask[1];
-            output.OutputParameters[0] = OracleParam;
-
-            var refOpt = new RefCursorToJTokenOptions
-            {
-                PathToRefCursor = "result.Result[0]",
-                IndexOfRefcursor = 0
-            };
-
-            var result = await ExecuteCommand.RefCursorToJToken(input, output, _taskOptions, refOpt);
-
-
-            //var resultSuper = ExecuteCommand.RefCursorToJTokenHelper(result.Result[0]);
-
-        }
-        */
-
         /// <summary>
         /// Get ref cursor and pass it to another task.
         /// </summary>
@@ -414,6 +312,9 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             output.OutputParameters[0] = OracleParam;
 
             var result = await ExecuteCommand.Execute(input, output, _taskOptions);
+
+            //////////////////////////////////////////////////
+            /// Ref cursor to JToken
 
             var secondInput = new RefCursorToJTokenInput
             {

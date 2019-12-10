@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel;
-using Oracle.ManagedDataAccess.Client;
 using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json;
 
 #pragma warning disable 1591
 
@@ -80,8 +78,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     public class Options
     {
         /// <summary>
-        /// Choose if error should be thrown if Task failes.
-        /// Otherwise returns Object {Success = false }
+        /// Choose if error should be thrown if Task failures. Otherwise errors are indicated in returned object.
         /// </summary>
         [DefaultValue(true)]
         public bool ThrowErrorOnFailure { get; set; }
@@ -90,7 +87,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     public class Output
     {
         /// <summary>
-        /// True if task was succesful. False if there was a error and it is not thrown.
+        /// True if task was successful. False if there was a error and it is not thrown.
         /// </summary>
         public bool Success { get; set; }
 
