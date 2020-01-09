@@ -13,7 +13,6 @@ using Newtonsoft.Json.Linq;
 namespace Frends.Community.Oracle.ExecuteCommand.Tests
 {
     [TestFixture]
-    //[Ignore("No way to automate this test without an Oracle instance.")]
     public class ExecuteQueryTests
     {
         //string connectionString = "Data Source=localhost;User Id=SYSTEM;Password=salasana1;Persist Security Info=True;";
@@ -21,7 +20,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         private Options _taskOptions;
 
         [SetUp]
-        public void TestSetupAsync()
+        public void TestSetup()
         {
             _taskOptions = new Options { ThrowErrorOnFailure = true };
         }
@@ -138,7 +137,6 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         {
             var query = "UnitTestProc";
 
-
             var input = new Input
             {
                 ConnectionString = connectionString,
@@ -148,7 +146,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
                 TimeoutSeconds = 60
             };
 
-            var OracleParam = new OracleParametersForTask
+            var oracleParam = new OracleParametersForTask
             {
                 DataType = OracleParametersForTask.ParameterDataType.Varchar2,
                 Name = "returnVal",
@@ -158,7 +156,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             var output = new OutputProperties();
 
             output.OutputParameters = new OracleParametersForTask[1];
-            output.OutputParameters[0] = OracleParam;
+            output.OutputParameters[0] = oracleParam;
 
             var result = await ExecuteCommand.Execute(input, output, _taskOptions);
 
@@ -169,7 +167,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Get ref cursor and pass it to another task.
         /// </summary>
         [Test, Order(20)]
-        public async Task GatAndUseRefCursor()
+        public async Task GetAndUseRefCursor()
         {
 
             // Replicate of test of  https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
@@ -195,12 +193,10 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             // Note this kind of usage of ref cursors don't work in frends. When run in frends task doesn't accept ref cursors as input parameters.
 
-            Options _taskOptions = new Options { ThrowErrorOnFailure = true };
-
             //////////////////////////////////////////////////
             /// Get refcursor
 
-            var OracleParam = new OracleParametersForTask
+            var oracleParam = new OracleParametersForTask
             {
                 DataType = OracleParametersForTask.ParameterDataType.RefCursor,
                 Name = "outRefPrm",
@@ -223,7 +219,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             };
 
             output.OutputParameters = new OracleParametersForTask[1];
-            output.OutputParameters[0] = OracleParam;
+            output.OutputParameters[0] = oracleParam;
 
             var result = await ExecuteCommand.Execute(input, output, _taskOptions);
 
@@ -244,7 +240,6 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             {
                 DataType = OracleParametersForTask.ParameterDataType.RefCursor,
                 Name = "param1",
-                // Value = result.Result[0].Value,
                 Value = result.Result[0].Value,
                 Size = 0
             };
@@ -281,12 +276,10 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             // Replicate of test of  https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
 
-            Options _taskOptions = new Options { ThrowErrorOnFailure = true };
-
             //////////////////////////////////////////////////
             /// Get refcursor
 
-            var OracleParam = new OracleParametersForTask
+            var oracleParam = new OracleParametersForTask
             {
                 DataType = OracleParametersForTask.ParameterDataType.RefCursor,
                 Name = "outRefPrm",
@@ -309,7 +302,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             };
 
             output.OutputParameters = new OracleParametersForTask[1];
-            output.OutputParameters[0] = OracleParam;
+            output.OutputParameters[0] = oracleParam;
 
             var result = await ExecuteCommand.Execute(input, output, _taskOptions);
 
@@ -321,9 +314,9 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
                 Refcursor = result.Result[0]
             };
 
-            var seconResult = ExecuteCommand.RefCursorToJToken(secondInput);
+            var secondResult = ExecuteCommand.RefCursorToJToken(secondInput);
             
-            StringAssert.Contains(@"[{""COL1"":1.0}]", JsonConvert.SerializeObject(seconResult.Result));
+            StringAssert.Contains(@"[{""COL1"":1.0}]", JsonConvert.SerializeObject(secondResult.Result));
         }
 
         /// <summary>
@@ -353,6 +346,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
 
             Assert.AreEqual(true, result.Success);
         }
+
 
     }
 }

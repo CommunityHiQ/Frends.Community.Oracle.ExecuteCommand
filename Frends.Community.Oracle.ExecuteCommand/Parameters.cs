@@ -175,7 +175,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
             Varchar2 = 126,
             XmlType = 127,
             BinaryDouble = 132,
-            BinaryFloat = 133
+            BinaryFloat = 133,
+            Boolean = 134
         }
 
     }

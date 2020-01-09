@@ -11,20 +11,22 @@ using System.ComponentModel;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Types;
+
 
 #pragma warning disable 1591
 namespace Frends.Community.Oracle.ExecuteCommand
 {
     public class ExecuteCommand
     {
-        private static readonly ConcurrentDictionary<string, OracleConnection> ConnectionCache =
-            new ConcurrentDictionary<string, OracleConnection>();
+        private static readonly ConcurrentDictionary<string, Lazy<OracleConnection>> LazyConnectionCache =
+            new ConcurrentDictionary<string, Lazy<OracleConnection>>();
 
         public static void ClearClientCache()
         {
-            ConnectionCache.Clear();
+            LazyConnectionCache.Clear();
         }
 
         /// <summary>
@@ -34,29 +36,32 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <param name="output">The output of the task</param>
         /// <param name="options">The options for the task</param>
         /// <returns>object { bool Success, string Message, dynamic Result }</returns>
-        public async static Task<Output> Execute([PropertyTab]Input input, [PropertyTab]OutputProperties output, [PropertyTab]Options options)
+        public async static Task<Output> Execute([PropertyTab] Input input, [PropertyTab] OutputProperties output,
+            [PropertyTab] Options options)
         {
 
             try
             {
-                OracleConnection Connection = null;
+                OracleConnection connection = null;
 
                 // Get connection from cache, or create a new one
-                Connection = GetConnection(input.ConnectionString);
+                connection = GetLazyConnection(input.ConnectionString);
 
-                if (Connection.State != ConnectionState.Open)
+                if (connection.State != ConnectionState.Open)
                 {
-                    await Connection.OpenAsync();
+                    await connection.OpenAsync();
                 }
 
-                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, Connection))
+                using (OracleCommand command = new OracleCommand(input.CommandOrProcedureName, connection))
                 {
                     command.CommandType = (CommandType) input.CommandType;
                     command.CommandTimeout = input.TimeoutSeconds;
 
                     if (input.InputParameters != null)
+                    {
                         command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x))
                             .ToArray());
+                    }
 
                     if (output.OutputParameters != null)
                         command.Parameters.AddRange(output.OutputParameters
@@ -88,7 +93,6 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
         }
 
-
         /// <summary>
         /// Reads data using ref cursor. Connection used to get ref cursor must be still open, when using this task. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
         /// </summary>
@@ -98,37 +102,39 @@ namespace Frends.Community.Oracle.ExecuteCommand
         {
             if (input.Refcursor.GetType() != typeof(OracleParameter))
             {
-                throw new ArgumentException("Parameter must be type: OracleParameter.");
+                throw new ArgumentException("Parameter 'Refcursor' must be type: OracleParameter.");
             }
 
             OracleDataReader dataReader = ((OracleRefCursor) input.Refcursor.Value).GetDataReader();
 
-            var RowList = new List<Dictionary<string, object>>();
+            var rowList = new List<Dictionary<string, object>>();
 
             while (dataReader.Read())
             {
-                var ColList = new Dictionary<string, object>();
+                var colList = new Dictionary<string, object>();
                 int i = 0;
 
                 // Find the column names.
                 foreach (DataRow row in dataReader.GetSchemaTable().Rows)
                 {
-                    ColList.Add(row[0].ToString(), dataReader[i]);
+                    colList.Add(row[0].ToString(), dataReader[i]);
                     i++;
                 }
-                RowList.Add(ColList);
+
+                rowList.Add(colList);
             }
 
             return new Output
             {
                 Success = true,
-                Result = JToken.FromObject(RowList)
+                Result = JToken.FromObject(rowList)
             };
         }
 
         #region HelperFunctions
+
         private static Output HandleDataset(IEnumerable<OracleParam> outputOracleParams, int affectedRows,
-    OutputProperties output)
+            OutputProperties output)
         {
             if (output.DataReturnType == OracleCommandReturnType.AffectedRows)
             {
@@ -143,7 +149,6 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 return new Output
                 {
                     Success = true,
-                    //Result = command.Parameters,
                     Result = outputOracleParams.ToList()
 
                 };
@@ -178,22 +183,89 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 Result = commandResult
             };
         }
-
-        private static OracleConnection GetConnection(string connectionString)
+        
+        private static OracleConnection GetLazyConnection(string connectionString)
         {
-            return ConnectionCache.GetOrAdd(connectionString, (opts) =>
+            var retretret = LazyConnectionCache.GetOrAdd(connectionString, (opts) =>
             {
-                // might get called more than once if e.g. many process instances execute at once,
-                // but that should not matter much, as only one client will get cached
+                return new Lazy<OracleConnection>(
+                    () =>
+                    {
+                        var connection = new OracleConnection(connectionString);
+                        connection.Open();
 
-                var connection = new OracleConnection(connectionString);
-
-                connection.Open();
-
-                // TODO: Add event to dispose connection, when it is closed (when timout exeeds)
-
-                return connection;
+                        // TODO: Add event to dispose connection, when it is closed (when timout exeeds)
+                        return connection;
+                    });
             });
+            return retretret.Value;
+        }
+
+        private static OracleDbType ConvertParameterDataTypeToOracleDbType(OracleParametersForTask.ParameterDataType DataType)
+        {
+            switch (DataType)
+            {
+                case OracleParametersForTask.ParameterDataType.BFile:
+                    return OracleDbType.BFile;
+                case OracleParametersForTask.ParameterDataType.Blob:
+                    return OracleDbType.Blob;
+                case OracleParametersForTask.ParameterDataType.Byte:
+                    return OracleDbType.Byte;
+                case OracleParametersForTask.ParameterDataType.Char:
+                    return OracleDbType.Char;
+                case OracleParametersForTask.ParameterDataType.Clob:
+                    return OracleDbType.Clob;
+                case OracleParametersForTask.ParameterDataType.Date:
+                    return OracleDbType.Date;
+                case OracleParametersForTask.ParameterDataType.Decimal:
+                    return OracleDbType.Decimal;
+                case OracleParametersForTask.ParameterDataType.Double:
+                    return OracleDbType.Double;
+                case OracleParametersForTask.ParameterDataType.Long:
+                    return OracleDbType.Long;
+                case OracleParametersForTask.ParameterDataType.LongRaw:
+                    return OracleDbType.LongRaw;
+                case OracleParametersForTask.ParameterDataType.Int16:
+                    return OracleDbType.Int16;
+                case OracleParametersForTask.ParameterDataType.Int32:
+                    return OracleDbType.Int32;
+                case OracleParametersForTask.ParameterDataType.Int64:
+                    return OracleDbType.Int64;
+                case OracleParametersForTask.ParameterDataType.IntervalDS:
+                    return OracleDbType.IntervalDS;
+                case OracleParametersForTask.ParameterDataType.IntervalYM:
+                    return OracleDbType.IntervalYM;
+                case OracleParametersForTask.ParameterDataType.NClob:
+                    return OracleDbType.NClob;
+                case OracleParametersForTask.ParameterDataType.NChar:
+                    return OracleDbType.NChar;
+                case OracleParametersForTask.ParameterDataType.NVarchar2:
+                    return OracleDbType.NVarchar2;
+                case OracleParametersForTask.ParameterDataType.Raw:
+                    return OracleDbType.Raw;
+                case OracleParametersForTask.ParameterDataType.RefCursor:
+                    return OracleDbType.RefCursor;
+                case OracleParametersForTask.ParameterDataType.Single:
+                    return OracleDbType.Single;
+                case OracleParametersForTask.ParameterDataType.TimeStamp:
+                    return OracleDbType.TimeStamp;
+                case OracleParametersForTask.ParameterDataType.TimeStampLTZ:
+                    return OracleDbType.TimeStampLTZ;
+                case OracleParametersForTask.ParameterDataType.TimeStampTZ:
+                    return OracleDbType.TimeStampTZ;
+                case OracleParametersForTask.ParameterDataType.Varchar2:
+                    return OracleDbType.Varchar2;
+                case OracleParametersForTask.ParameterDataType.XmlType:
+                    return OracleDbType.XmlType;
+                case OracleParametersForTask.ParameterDataType.BinaryDouble:
+                    return OracleDbType.BinaryDouble;
+                case OracleParametersForTask.ParameterDataType.BinaryFloat:
+                    return OracleDbType.BinaryFloat;
+                case OracleParametersForTask.ParameterDataType.Boolean:
+                    return OracleDbType.Boolean;
+            }
+            // you should newer reach this.
+            throw new Exception("Can't convert ParameterDataType to OracleDbType");
         }
 
         private static OracleParam CreateOracleParam(OracleParametersForTask parameter, ParameterDirection? direction = null)
@@ -202,7 +274,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
             {
                 ParameterName = parameter.Name,
                 Value = parameter.Value,
-                OracleDbType = (OracleDbType)(int)parameter.DataType,
+                OracleDbType = ConvertParameterDataTypeToOracleDbType(parameter.DataType),
                 Size = parameter.Size
             };
             if (direction.HasValue)
