@@ -7,7 +7,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
 {
     #region Enums
     public enum OracleCommandType { StoredProcedure = 4, Command = 1 }
-    public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString }
+    public enum OracleCommandReturnType { XmlString, XDocument, AffectedRows, JSONString, Parameters }
+
     #endregion
 
     /// <summary>
@@ -15,6 +16,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     /// </summary>
     public class Input
     {
+
         /// <summary>
         /// The Oracle DB connection string
         /// </summary>
@@ -38,7 +40,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <summary>
         /// The input parameters for the query
         /// </summary>
-        public OracleParameter[] InputParameters { get; set; }
+        public OracleParametersForTask[] InputParameters { get; set; }
 
         /// <summary>
         /// Whether to bind parameters by name
@@ -67,7 +69,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
         /// <summary>
         /// The output parameters for the query
         /// </summary>
-        public OracleParameter[] OutputParameters { get; set; }
+        public OracleParametersForTask[] OutputParameters { get; set; }
     }
 
     /// <summary>
@@ -76,8 +78,7 @@ namespace Frends.Community.Oracle.ExecuteCommand
     public class Options
     {
         /// <summary>
-        /// Choose if error should be thrown if Task failes.
-        /// Otherwise returns Object {Success = false }
+        /// Choose if error should be thrown if Task failures. Otherwise errors are indicated in returned object.
         /// </summary>
         [DefaultValue(true)]
         public bool ThrowErrorOnFailure { get; set; }
@@ -85,15 +86,36 @@ namespace Frends.Community.Oracle.ExecuteCommand
 
     public class Output
     {
+        /// <summary>
+        /// True if task was successful. False if there was a error and it is not thrown.
+        /// </summary>
         public bool Success { get; set; }
+
+        /// <summary>
+        /// Possible error message.
+        /// </summary>
         public string Message { get; set; }
+
+        /// <summary>
+        /// Result. Content and data type depends on task options.
+        /// </summary>
         public dynamic Result { get; set; }
+    }
+
+    public class RefCursorToJTokenInput
+    {
+        /// <summary>
+        /// Ref cursor. Must be type OracleParameter.
+        /// </summary>
+        [DefaultValue("#result.Result[0]")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public dynamic Refcursor { get; set; }
     }
 
     /// <summary>
     /// Parameters for query
     /// </summary>
-    public class OracleParameter
+    public class OracleParametersForTask
     {
         /// <summary>
         /// The name of the parameter
@@ -153,7 +175,8 @@ namespace Frends.Community.Oracle.ExecuteCommand
             Varchar2 = 126,
             XmlType = 127,
             BinaryDouble = 132,
-            BinaryFloat = 133
+            BinaryFloat = 133,
+            Boolean = 134
         }
 
     }
