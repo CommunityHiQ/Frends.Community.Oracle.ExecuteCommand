@@ -1,0 +1,10 @@
+﻿{
+	"Tasks": [
+		{
+			"TaskMethod": "Frends.Community.Oracle.ExecuteCommand.ExecuteCommand.Execute"
+		},
+		{
+			"TaskMethod": "Frends.Community.Oracle.ExecuteCommand.ExecuteCommand.RefCursorToJToken"
+		}
+	]
+}

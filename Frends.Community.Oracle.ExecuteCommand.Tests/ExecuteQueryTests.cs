@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using NUnit.Framework;
-using TestConfigurationHandler;
 using Oracle.ManagedDataAccess.Client;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 using System.Collections.Generic;
@@ -16,7 +15,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
     public class ExecuteQueryTests
     {
         //string connectionString = "Data Source=localhost;User Id=SYSTEM;Password=salasana1;Persist Security Info=True;";
-        private string connectionString = ConfigHandler.ReadConfigValue("HiQ.OracleDb.connectionString");
+        private string connectionString = Environment.GetEnvironmentVariable("HiQ.OracleDb.connectionString", EnvironmentVariableTarget.User);
         private Options _taskOptions;
 
         [SetUp]
