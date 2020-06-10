@@ -2,6 +2,9 @@
 
 FRENDS Oracle task for executing commands in a database
 
+[![Actions Status](https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand/workflows/PackAndPushAfterMerge/badge.svg)](https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand/actions) ![MyGet](https://img.shields.io/myget/frends-community/v/Frends.Community.Oracle.ExecuteCommand) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
+
+
 - [Frends.Community.Oracle.ExecuteCommand](#frendscommunityoracleexecutecommand)
 - [Tasks](#tasks)
   - [Execute](#execute)
@@ -76,26 +79,25 @@ Formally task has dynamic parameter, because on process level FRENDS can't inclu
 
 
 ## Installing
-You can install the task via FRENDS UI Task View or you can find the nuget package from the following nuget feed https://www.myget.org/F/frends-community/api/v2.
+You can install the task via FRENDS UI Task View or you can find the NuGet package from the following NuGet feed
+https://www.myget.org/F/frends-community/api/v3/index.json and in Gallery view in MyGet https://www.myget.org/feed/frends-community/package/nuget/Frends.Community.Oracle.ExecuteCommand
 
 ## Building
 Clone a copy of the repo
 
-`git clone https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand`
-
-Restore dependencies
-
-`nuget restore frends.community.oracle.executecommand`
+`git clone https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand.git`
 
 Rebuild the project
 
-Run Tests with nunit3. Tests can be found under
+`dotnet build`
 
-`Frends.Community.Oracle.QueryData.Tests\bin\Release\Frends.Community.Oracle.ExecuteCommand.Tests`
+Run Tests
 
-Create a nuget package
+`dotnet test`
 
-`nuget pack nuspec/Frends.Community.Oracle.ExecuteCommand.nuspec`
+Create a NuGet package
+
+`dotnet pack --configuration Release`
 
 ## Contributing
 When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change.
@@ -117,4 +119,4 @@ NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 | 1.2.0 | Reverted Frends.Tasks.Attributes to 1.2.0 |
 | 1.3.0 | Replaced Frends.Tasks.Attributes with System.ComponentModel |
 | 2.0.0 | Task now support returning ref cursor, also connection management was added.|
-
+| 2.1.0 | Task will now multitarget both .Net Standard and .Net Framework.
