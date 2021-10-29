@@ -11,7 +11,6 @@ using System.ComponentModel;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Types;
 
@@ -129,6 +128,40 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 Success = true,
                 Result = JToken.FromObject(rowList)
             };
+        }
+
+        /// <summary>
+        /// Execute query and evaluate Ref Cursor to JToken. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
+        /// </summary>
+        /// <param name="input">The input data for the task</param>
+        /// <param name="output">The output of the task</param>
+        /// <param name="options">The options for the task</param>
+        /// <returns>object { bool Success, string Message, dynamic Result }</returns>
+        public async static Task<Output> ExecuteAndRefCursorToJToken([PropertyTab] Input input, [PropertyTab] OutputPropertiesWithoutDataType output, [PropertyTab] Options options)
+        {
+            List<OracleParametersForTask> parameters = new List<OracleParametersForTask>();
+            foreach (var outputParam in output.OutputParameters)
+            {
+                parameters.Add(new OracleParametersForTask
+                {
+                    Name = outputParam.Name,
+                    Value = outputParam.Value,
+                    DataType = OracleParametersForTask.ParameterDataType.RefCursor,
+                    Size = outputParam.Size
+                });
+            }
+            var executeOutput = new OutputProperties
+            {
+                DataReturnType = OracleCommandReturnType.Parameters,
+                OutputParameters = parameters.ToArray()
+            };
+            var execute = await Execute(input, executeOutput, options);
+            var secondInput = new RefCursorToJTokenInput
+            {
+                Refcursor = execute.Result[0]
+            };
+            var secondResult = RefCursorToJToken(secondInput);
+            return secondResult;
         }
 
         #region HelperFunctions

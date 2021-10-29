@@ -73,6 +73,17 @@ namespace Frends.Community.Oracle.ExecuteCommand
     }
 
     /// <summary>
+    /// Output of Oracle ExecuteAndRefCursorToJToken-component
+    /// </summary>
+    public class OutputPropertiesWithoutDataType
+    {
+        /// <summary>
+        /// The output parameters for the query without DataType
+        /// </summary>
+        public OracleParametersForTaskWithoutDataType[] OutputParameters { get; set; }
+    }
+
+    /// <summary>
     /// Options for Oracle ExecuteCommand component
     /// </summary>
     public class Options
@@ -178,6 +189,31 @@ namespace Frends.Community.Oracle.ExecuteCommand
             BinaryFloat = 133,
             Boolean = 134
         }
+    }
 
+    /// <summary>
+    /// Parameters for query without DataType
+    /// </summary>
+    public class OracleParametersForTaskWithoutDataType
+    {
+        /// <summary>
+        /// The name of the parameter
+        /// </summary>
+        [DefaultValue("Parameter Name")]
+        [DisplayFormat(DataFormatString = "Text")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// The value of the parameter
+        /// </summary>
+        [DefaultValue("Value")]
+        [DisplayFormat(DataFormatString = "Text")]
+        public dynamic Value { get; set; }
+
+        /// <summary>
+        /// The size of the parameter. Doesn't need to be set for input parameters.
+        /// </summary>
+        [DefaultValue(0)]
+        public int Size { get; set; }
     }
 }
