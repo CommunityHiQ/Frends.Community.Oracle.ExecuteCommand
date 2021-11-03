@@ -11,7 +11,6 @@ using System.ComponentModel;
 using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Types;
 
@@ -131,7 +130,89 @@ namespace Frends.Community.Oracle.ExecuteCommand
             };
         }
 
+        /// <summary>
+        /// Execute query and evaluate Ref Cursor to JToken. See documentation at https://github.com/CommunityHiQ/Frends.Community.Oracle.ExecuteCommand
+        /// </summary>
+        /// <param name="input">The input data for the task</param>
+        /// <param name="output">The output of the task</param>
+        /// <param name="options">The options for the task</param>
+        /// <returns>object { bool Success, string Message, dynamic Result }</returns>
+        public async static Task<Output> ExecuteAndRefCursorToJToken([PropertyTab] Input input, [PropertyTab] OutputPropertiesWithoutDataType output, [PropertyTab] Options options)
+        {
+            List<OracleParametersForTask> parameters = new List<OracleParametersForTask>();
+            foreach (var outputParam in output.OutputParameters)
+            {
+                parameters.Add(new OracleParametersForTask
+                {
+                    Name = outputParam.Name,
+                    Value = outputParam.Value,
+                    DataType = OracleParametersForTask.ParameterDataType.RefCursor,
+                    Size = outputParam.Size
+                });
+            }
+            var executeOutput = new OutputProperties
+            {
+                DataReturnType = OracleCommandReturnType.Parameters,
+                OutputParameters = parameters.ToArray()
+            };
+            var connection = new OracleConnection(input.ConnectionString);
+            connection.Open();
+            var execute = await ExecuteWithoutLazyConnection(input, executeOutput, options, connection);
+            var secondInput = new RefCursorToJTokenInput
+            {
+                Refcursor = execute.Result[0]
+            };
+            var secondResult = RefCursorToJToken(secondInput);
+            connection.Close();
+            return secondResult;
+        }
+
         #region HelperFunctions
+
+        private async static Task<Output> ExecuteWithoutLazyConnection(Input input, OutputProperties output,
+            Options options, OracleConnection connection)
+        {
+            try
+            {
+                OracleCommand command = new OracleCommand(input.CommandOrProcedureName, connection)
+                {
+                    CommandType = (CommandType)input.CommandType,
+                    CommandTimeout = input.TimeoutSeconds
+                };
+
+                if (input.InputParameters != null)
+                    {
+                        command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x))
+                            .ToArray());
+                    }
+
+                if (output.OutputParameters != null)
+                    command.Parameters.AddRange(output.OutputParameters
+                        .Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+
+                command.BindByName = input.BindParametersByName;
+
+                int affectedRows = 0;
+
+                // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
+                var runCommand = command.ExecuteNonQueryAsync();
+                affectedRows = await runCommand;
+
+                IEnumerable<OracleParam> outputOracleParams = null;
+
+                outputOracleParams = command.Parameters.Cast<OracleParam>()
+                    .Where(p => p.Direction == ParameterDirection.Output);
+
+                return HandleDataset(outputOracleParams, affectedRows, output);
+            }
+            catch (Exception ex)
+            {
+                if (options.ThrowErrorOnFailure)
+                    throw ex;
+                return new Output { Success = false, Message = ex.Message };
+            }
+
+        }
 
         private static Output HandleDataset(IEnumerable<OracleParam> outputOracleParams, int affectedRows,
             OutputProperties output)

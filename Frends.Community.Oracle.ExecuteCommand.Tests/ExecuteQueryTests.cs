@@ -1,22 +1,15 @@
 ﻿using System;
-using System.Collections;
 using NUnit.Framework;
 using TestConfigurationHandler;
-using Oracle.ManagedDataAccess.Client;
-using OracleParam = Oracle.ManagedDataAccess.Client.OracleParameter;
-using System.Collections.Generic;
-using System.Data;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Frends.Community.Oracle.ExecuteCommand.Tests
 {
     [TestFixture]
     public class ExecuteQueryTests
     {
-        //string connectionString = "Data Source=localhost;User Id=SYSTEM;Password=salasana1;Persist Security Info=True;";
-        private string connectionString = ConfigHandler.ReadConfigValue("HiQ.OracleDb.connectionString");
+        private readonly string connectionString = ConfigHandler.ReadConfigValue("HiQ.OracleDb.connectionString");
         private Options _taskOptions;
 
         [SetUp]
@@ -29,7 +22,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Creates a table that is used in other tests.
         /// </summary>
         [Test, Order(5)]
-        public async System.Threading.Tasks.Task CreateTable()
+        public async Task CreateTable()
         {
             var query = "CREATE TABLE TestTable(textField VARCHAR(255))";
 
@@ -51,7 +44,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Creates a stored procedure UnitTestProc that is used in other tests.
         /// </summary>
         [Test, Order(10)]
-        public async System.Threading.Tasks.Task CreateProcedure()
+        public async Task CreateProcedure()
         {
             var query = @"
                             CREATE PROCEDURE UnitTestProc (returnVal OUT VARCHAR2) AS
@@ -78,7 +71,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Insert data to the TestTable.
         /// </summary>
         [Test, Order(15)]
-        public async System.Threading.Tasks.Task InsertValues()
+        public async Task InsertValues()
         {
             var query = "INSERT INTO TestTable (textField) VALUES ('unit test text')";
 
@@ -100,7 +93,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Insert data to the TestTable using task parameters.
         /// </summary>
         [Test, Order(15)]
-        public async System.Threading.Tasks.Task InsertValuesViaParametersAsync()
+        public async Task InsertValuesViaParametersAsync()
         {
             var query = "INSERT INTO TestTable (textField) VALUES (:param1)";
 
@@ -133,7 +126,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Execute stored procedure UnitTestProc.
         /// </summary>
         [Test, Order(20)]
-        public async System.Threading.Tasks.Task ExecuteStoredProcedureWithOutputParamAsync()
+        public async Task ExecuteStoredProcedureWithOutputParamAsync()
         {
             var query = "UnitTestProc";
 
@@ -153,9 +146,10 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
                 Size = 255
             };
 
-            var output = new OutputProperties();
-
-            output.OutputParameters = new OracleParametersForTask[1];
+            var output = new OutputProperties
+            {
+                OutputParameters = new OracleParametersForTask[1]
+            };
             output.OutputParameters[0] = oracleParam;
 
             var result = await ExecuteCommand.Execute(input, output, _taskOptions);
@@ -271,7 +265,7 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
         /// Get ref cursor and pass it to another task.
         /// </summary>
         [Test, Order(20)]
-        public async System.Threading.Tasks.Task GatAndUseRefCursorToJtoken()
+        public async Task GatAndUseRefCursorToJtoken()
         {
 
             // Replicate of test of  https://docs.oracle.com/database/121/ODPNT/featRefCursor.htm#ODPNT319
@@ -319,11 +313,40 @@ namespace Frends.Community.Oracle.ExecuteCommand.Tests
             StringAssert.Contains(@"[{""COL1"":1.0}]", JsonConvert.SerializeObject(secondResult.Result));
         }
 
+        [Test, Order(21)]
+        public async Task TestExecuteToJtoken()
+        {
+            var oracleParam = new OracleParametersForTaskWithoutDataType
+            {
+                Name = "outRefPrm",
+                Value = DBNull.Value,
+                Size = 0
+            };
+
+            var output = new OutputPropertiesWithoutDataType();
+
+            var input = new Input
+            {
+                ConnectionString = connectionString,
+                CommandOrProcedureName = "begin open :1 for select col1 from test; end;",
+                CommandType = OracleCommandType.Command,
+                BindParametersByName = false,
+                TimeoutSeconds = 60
+            };
+
+            output.OutputParameters = new OracleParametersForTaskWithoutDataType[1];
+            output.OutputParameters[0] = oracleParam;
+
+            var result = await ExecuteCommand.ExecuteAndRefCursorToJToken(input, output, _taskOptions);
+
+            StringAssert.Contains(@"[{""COL1"":1.0}]", JsonConvert.SerializeObject(result.Result));
+        }
+
         /// <summary>
         /// Drop TestTable and UnitTestProc.
         /// </summary>
         [Test, Order(50)]
-        public async System.Threading.Tasks.Task TestTearDownAsync()
+        public async Task TestTearDownAsync()
         {
             var query = "DROP TABLE TestTable";
             var output = new OutputProperties();

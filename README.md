@@ -6,6 +6,7 @@ FRENDS Oracle task for executing commands in a database
 - [Tasks](#tasks)
   - [Execute](#execute)
   - [RefCursorToJToken](#refcursortojtoken)
+  - [ExecuteAndRefCursorToJToken](#executeandrefcursortojtoken)
 - [License](#license)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
@@ -74,6 +75,53 @@ Formally task has dynamic parameter, because on process level FRENDS can't inclu
 | ---------------------| ---------------------| ----------------------- | -------- |
 | Refcursor | `dynamic`  | Ref cursor. Parameter must be type `OracleParameter`. | `#result.Result[0]` |
 
+
+### ExecuteAndRefCursorToJToken
+
+Combines Execute and RefCursorToJToken tasks together, so you don't have to pass the Oracle DB connection from one task to another.'
+
+NOTE: the correct notation to use parameters in PL/SQL is :parameterName, not @parameterName as in T-SQL.
+
+
+#### Input
+
+| Property             | Type                 | Description                          | Example |
+| ---------------------| ---------------------| ------------------------------------ | ----- |
+| ConnectionString | `string` | Connection string to the oracle database. | `Data Source=localhost;User Id=<userid>;Password=<password>;Persist Security Info=True;` |
+| CommandType | `enum` | The type of command to execute: command or stored procedure. | `Command` |
+| CommandOrProcedureName | `string` | The SQL command or stored procedure to execute. | `INSERT INTO TestTable (textField) VALUES (:param1)` |
+| InputParameters | `OracleParametersForTask[]` |  Array with the oracle input parameters. | See bellow. |
+| BindParametersByName | `bool` | Whether to bind the parameters by name. | `false` |
+| TimeoutSeconds | `integer` | The amount of seconds to let a query run before timeout. | `60` |
+
+#### OutputProperties
+
+| Property             | Type                 | Description                          | Example |
+| ---------------------| ---------------------| ------------------------------------ | ----- |
+| OutputParameters | `OracleParametersForTaskWithoutDataType[]` |  Array with the oracle input parameters. | See bellow. |
+
+
+#### OracleParametersForTaskWithoutDataType
+
+| Property             | Type                 | Description                          | Example |
+| ---------------------| ---------------------| ------------------------------------ | ----- |
+| Name | `string` | Name of the parameter | `ParamName` |
+| Value | `dynamic` | Value of the parameter | `1` |
+| Size | `int` | Specifies the size of the parameter | `255` |
+
+#### Options
+
+| Property             | Type                 | Description                          | Example |
+| ---------------------| ---------------------| ------------------------------------ | ----- |
+| ThrowErrorOnFailure | `bool` | Choose if error should be thrown if Task failes. | `false` |
+
+#### Result
+
+| Property/Method | Type | Description | Example |
+| ---------------------| ---------------------| ----------------------- | -------- |
+| Success | `boolean` | Task execution result. | true |
+| Message | `string` | Failed task execution message (if `ThrowErrorOnFailure` is false). | "Connection failed" |
+| Result | `dynamic` | Evaluated Ref Cursor as JToken. | [{"COL1": 1}] |
 
 ## Installing
 You can install the task via FRENDS UI Task View or you can find the nuget package from the following nuget feed https://www.myget.org/F/frends-community/api/v2.
