@@ -155,16 +155,64 @@ namespace Frends.Community.Oracle.ExecuteCommand
                 DataReturnType = OracleCommandReturnType.Parameters,
                 OutputParameters = parameters.ToArray()
             };
-            var execute = await Execute(input, executeOutput, options);
+            var connection = new OracleConnection(input.ConnectionString);
+            connection.Open();
+            var execute = await ExecuteWithoutLazyConnection(input, executeOutput, options, connection);
             var secondInput = new RefCursorToJTokenInput
             {
                 Refcursor = execute.Result[0]
             };
             var secondResult = RefCursorToJToken(secondInput);
+            connection.Close();
             return secondResult;
         }
 
         #region HelperFunctions
+
+        private async static Task<Output> ExecuteWithoutLazyConnection(Input input, OutputProperties output,
+            Options options, OracleConnection connection)
+        {
+            try
+            {
+                OracleCommand command = new OracleCommand(input.CommandOrProcedureName, connection)
+                {
+                    CommandType = (CommandType)input.CommandType,
+                    CommandTimeout = input.TimeoutSeconds
+                };
+
+                if (input.InputParameters != null)
+                    {
+                        command.Parameters.AddRange(input.InputParameters.Select(x => CreateOracleParam(x))
+                            .ToArray());
+                    }
+
+                if (output.OutputParameters != null)
+                    command.Parameters.AddRange(output.OutputParameters
+                        .Select(x => CreateOracleParam(x, ParameterDirection.Output)).ToArray());
+
+                command.BindByName = input.BindParametersByName;
+
+                int affectedRows = 0;
+
+                // Oracle command executions are not really async https://stackoverflow.com/questions/29016698/can-the-oracle-managed-driver-use-async-wait-properly/29034412#29034412
+                var runCommand = command.ExecuteNonQueryAsync();
+                affectedRows = await runCommand;
+
+                IEnumerable<OracleParam> outputOracleParams = null;
+
+                outputOracleParams = command.Parameters.Cast<OracleParam>()
+                    .Where(p => p.Direction == ParameterDirection.Output);
+
+                return HandleDataset(outputOracleParams, affectedRows, output);
+            }
+            catch (Exception ex)
+            {
+                if (options.ThrowErrorOnFailure)
+                    throw ex;
+                return new Output { Success = false, Message = ex.Message };
+            }
+
+        }
 
         private static Output HandleDataset(IEnumerable<OracleParam> outputOracleParams, int affectedRows,
             OutputProperties output)
